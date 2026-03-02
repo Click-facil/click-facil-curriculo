@@ -1,0 +1,39 @@
+/* --- CORREÇÃO PARA O BUG DO POP-UP (TELA PRETA) --- */
+
+/* Garante que a página principal não role quando o pop-up estiver aberto */
+body.modal-open {
+    overflow: hidden;
+}
+
+/* Cria o fundo escuro (overlay) quando o pop-up está ativo */
+body.modal-open::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    /* z-index: define a ordem de empilhamento. O fundo fica atrás. */
+    z-index: 1000;
+}
+
+/* Garante que o modal (pop-up) fique na FRENTE do fundo escuro */
+.modal {
+    position: fixed; /* Necessário para o z-index funcionar */
+    /* z-index maior que o do fundo, para o pop-up ficar na frente */
+    z-index: 1001;
+}
+
+/* Esconde o modal por padrão */
+.modal {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+/* Torna o modal visível quando a classe 'active' é adicionada via JavaScript */
+.modal.active {
+    opacity: 1;
+    visibility: visible;
+}
