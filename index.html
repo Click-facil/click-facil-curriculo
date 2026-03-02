@@ -1,26 +1,111 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Fácil Currículo - Gerador de Currículo</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <header>
+        <div class="container">
+            <h1>Click Fácil Currículo</h1>
+            <p>Crie seu currículo profissional de forma rápida e fácil.</p>
+        </div>
+    </header>
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+    <main class="container">
+        <div class="resume-form">
+            <h2>Informações Pessoais</h2>
+            <div class="form-group">
+                <label for="full-name">Nome Completo</label>
+                <input type="text" id="full-name" placeholder="Ex: João da Silva">
+            </div>
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="Ex: joao.silva@email.com">
+            </div>
+            <div class="form-group">
+                <label for="phone">Telefone</label>
+                <input type="tel" id="phone" placeholder="Ex: (11) 99999-8888">
+            </div>
+            <div class="form-group">
+                <label for="address">Endereço</label>
+                <input type="text" id="address" placeholder="Ex: Rua das Flores, 123, São Paulo - SP">
+            </div>
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+            <h2>Formação Acadêmica <button id="open-modal-step-by-step" class="help-btn">?</button></h2>
+            <div class="form-group">
+                <label for="course-level">Nível do Curso</label>
+                <input type="text" id="course-level" placeholder="Clique para escolher" readonly>
+                <button id="open-modal-level" class="choose-btn">Escolher</button>
+            </div>
+            <div class="form-group">
+                <label for="institution">Instituição de Ensino</label>
+                <input type="text" id="institution" placeholder="Ex: Universidade de São Paulo">
+            </div>
+            <div class="form-group">
+                <label for="course-name">Nome do Curso</label>
+                <input type="text" id="course-name" placeholder="Ex: Ciência da Computação">
+            </div>
+            <button id="add-education" class="add-btn"><i class="fas fa-plus"></i> Adicionar Formação</button>
+
+            <div class="education-summary">
+                <h3>Formações Adicionadas:</h3>
+                <ul id="education-list">
+                    <!-- Itens de formação serão adicionados aqui -->
+                </ul>
+            </div>
+        </div>
+
+        <div class="resume-preview">
+            <h2>Pré-visualização</h2>
+            <div class="preview-content">
+                <!-- A pré-visualização será gerada aqui -->
+                <p>A pré-visualização do seu currículo aparecerá aqui em tempo real.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 Click Fácil Currículo. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Modal Passo a Passo -->
+    <div class="modal" id="modal-step-by-step">
+        <div class="modal-content">
+            <button class="close-button" id="close-modal-step-by-step">&times;</button>
+            <h2>Como Adicionar sua Formação</h2>
+            <ol>
+                <li><strong>Escolha o Nível:</strong> Clique em "Escolher" para abrir a lista de níveis (Técnico, Graduação, etc.) e selecione uma opção.</li>
+                <li><strong>Preencha os Campos:</strong> Informe o nome da Instituição e do Curso nos campos correspondentes.</li>
+                <li><strong>Adicione à Lista:</strong> Clique no botão "+ Adicionar Formação".</li>
+                <li><strong>Repita:</strong> Adicione quantas formações desejar. Você pode remover uma formação clicando no "✖" ao lado dela.</li>
+            </ol>
+            <button id="finish-step-by-step" class="add-btn">Entendi!</button>
+        </div>
+    </div>
+
+    <!-- Modal Nível do Curso -->
+    <div class="modal" id="modal-level">
+        <div class="modal-content">
+            <button class="close-button" id="close-modal-level">&times;</button>
+            <h2>Selecione o Nível do Curso</h2>
+            <ul class="level-options">
+                <li class="level-option" data-level="Ensino Médio">Ensino Médio</li>
+                <li class="level-option" data-level="Técnico">Técnico</li>
+                <li class="level-option" data-level="Graduação">Graduação</li>
+                <li class="level-option" data-level="Pós-graduação">Pós-graduação</li>
+                <li class="level-option" data-level="Mestrado">Mestrado</li>
+                <li class="level-option" data-level="Doutorado">Doutorado</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
 </html>
