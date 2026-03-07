@@ -3,7 +3,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Skill, Language } from "@/types/resume";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FieldTooltip from "./FieldTooltip";
 
 interface Props {
@@ -13,14 +12,19 @@ interface Props {
   onLanguagesChange: (data: Language[]) => void;
 }
 
+const selectClass =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
 const SkillsStep = ({ skills, languages, onSkillsChange, onLanguagesChange }: Props) => {
   const addSkill = () => onSkillsChange([...skills, { id: crypto.randomUUID(), name: "", level: "Intermediário" }]);
   const removeSkill = (id: string) => onSkillsChange(skills.filter((s) => s.id !== id));
-  const updateSkill = (id: string, field: keyof Skill, value: string) => onSkillsChange(skills.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  const updateSkill = (id: string, field: keyof Skill, value: string) =>
+    onSkillsChange(skills.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
 
   const addLang = () => onLanguagesChange([...languages, { id: crypto.randomUUID(), name: "", level: "Básico" }]);
   const removeLang = (id: string) => onLanguagesChange(languages.filter((l) => l.id !== id));
-  const updateLang = (id: string, field: keyof Language, value: string) => onLanguagesChange(languages.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
+  const updateLang = (id: string, field: keyof Language, value: string) =>
+    onLanguagesChange(languages.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
 
   return (
     <div className="space-y-8">
@@ -38,21 +42,30 @@ const SkillsStep = ({ skills, languages, onSkillsChange, onLanguagesChange }: Pr
           <div key={skill.id} className="flex items-end gap-3">
             <div className="flex-1">
               <Label>Habilidade</Label>
-              <Input placeholder="Ex: Excel, Photoshop, Gestão de Projetos" value={skill.name} onChange={(e) => updateSkill(skill.id, "name", e.target.value)} />
+              <Input
+                placeholder="Ex: Excel, Photoshop, Gestão de Projetos"
+                value={skill.name}
+                onChange={(e) => updateSkill(skill.id, "name", e.target.value)}
+              />
             </div>
             <div className="w-40">
               <Label>Nível</Label>
-              <Select value={skill.level} onValueChange={(v) => updateSkill(skill.id, "level", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Básico">Básico</SelectItem>
-                  <SelectItem value="Intermediário">Intermediário</SelectItem>
-                  <SelectItem value="Avançado">Avançado</SelectItem>
-                  <SelectItem value="Especialista">Especialista</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={skill.level}
+                onChange={(e) => updateSkill(skill.id, "level", e.target.value)}
+                className={selectClass}
+              >
+                <option value="Básico">Básico</option>
+                <option value="Intermediário">Intermediário</option>
+                <option value="Avançado">Avançado</option>
+                <option value="Especialista">Especialista</option>
+              </select>
             </div>
-            <button type="button" onClick={() => removeSkill(skill.id)} className="mb-2 text-muted-foreground hover:text-destructive">
+            <button
+              type="button"
+              onClick={() => removeSkill(skill.id)}
+              className="mb-2 text-muted-foreground hover:text-destructive"
+            >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
@@ -71,22 +84,31 @@ const SkillsStep = ({ skills, languages, onSkillsChange, onLanguagesChange }: Pr
           <div key={lang.id} className="flex items-end gap-3">
             <div className="flex-1">
               <Label>Idioma</Label>
-              <Input placeholder="Ex: Inglês, Espanhol" value={lang.name} onChange={(e) => updateLang(lang.id, "name", e.target.value)} />
+              <Input
+                placeholder="Ex: Inglês, Espanhol"
+                value={lang.name}
+                onChange={(e) => updateLang(lang.id, "name", e.target.value)}
+              />
             </div>
             <div className="w-40">
               <Label>Nível</Label>
-              <Select value={lang.level} onValueChange={(v) => updateLang(lang.id, "level", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Básico">Básico</SelectItem>
-                  <SelectItem value="Intermediário">Intermediário</SelectItem>
-                  <SelectItem value="Avançado">Avançado</SelectItem>
-                  <SelectItem value="Fluente">Fluente</SelectItem>
-                  <SelectItem value="Nativo">Nativo</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={lang.level}
+                onChange={(e) => updateLang(lang.id, "level", e.target.value)}
+                className={selectClass}
+              >
+                <option value="Básico">Básico</option>
+                <option value="Intermediário">Intermediário</option>
+                <option value="Avançado">Avançado</option>
+                <option value="Fluente">Fluente</option>
+                <option value="Nativo">Nativo</option>
+              </select>
             </div>
-            <button type="button" onClick={() => removeLang(lang.id)} className="mb-2 text-muted-foreground hover:text-destructive">
+            <button
+              type="button"
+              onClick={() => removeLang(lang.id)}
+              className="mb-2 text-muted-foreground hover:text-destructive"
+            >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>

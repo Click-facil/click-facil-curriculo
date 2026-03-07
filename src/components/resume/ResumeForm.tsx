@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Download, Eye, EyeOff, FileText, Save, Palette } from "lucide-react";
+import { ArrowLeft, ArrowRight, Download, Eye, EyeOff, FileText, Save, Palette, Mail, Info } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { ResumeData, emptyResume } from "@/types/resume";
 import StepIndicator from "./StepIndicator";
@@ -12,7 +12,6 @@ import SkillsStep from "./SkillsStep";
 import ResumePreview from "./ResumePreview";
 import OnboardingTour from "./OnboardingTour";
 import { toast } from "sonner";
-import { Progress } from "@/components/ui/progress";
 import { exportToDocx } from "@/lib/docx-export";
 
 const STEPS = ["Dados Pessoais", "Formação", "Experiência", "Cursos", "Habilidades", "Finalizar"];
@@ -46,7 +45,6 @@ const ResumeForm = () => {
   });
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // Auto-save to localStorage
   useEffect(() => {
     const timeout = setTimeout(() => {
       try {
@@ -61,10 +59,9 @@ const ResumeForm = () => {
     localStorage.setItem(TEMPLATE_KEY, template);
   }, [template]);
 
-  // Calculate progress percentage
   const getProgress = useCallback(() => {
     let filled = 0;
-    let total = 6; // personal info required fields
+    let total = 6;
     const pi = data.personalInfo;
     if (pi.fullName) filled++;
     if (pi.email) filled++;
@@ -94,20 +91,45 @@ const ResumeForm = () => {
   const handleDownload = async () => {
     setGenerating(true);
     try {
-      const html2pdf = (await import("html2pdf.js")).default;
+      // Garante que o elemento de preview existe e está visível
       const element = document.getElementById("resume-preview");
-      if (!element) return;
+      if (!element) {
+        toast.error("Prévia não encontrada. Tente novamente.");
+        return;
+      }
+
+      // Salva estilos originais
+      const originalStyle = element.getAttribute("style") || "";
+
+      // Força largura A4 exata para geração sem distorção
+      element.style.width = "794px";
+      element.style.maxWidth = "794px";
+      element.style.transform = "none";
+
+      // Aguarda re-render
+      await new Promise((r) => setTimeout(r, 300));
+
+      const html2pdf = (await import("html2pdf.js")).default;
 
       await html2pdf()
         .set({
           margin: 0,
           filename: `curriculo-${data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu"}.pdf`,
           image: { type: "jpeg", quality: 1 },
-          html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            width: 794,
+            windowWidth: 794,
+          },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         })
         .from(element)
         .save();
+
+      // Restaura estilo original
+      element.setAttribute("style", originalStyle);
 
       toast.success("Currículo baixado com sucesso!");
     } catch (err) {
@@ -143,7 +165,7 @@ const ResumeForm = () => {
   const progress = getProgress();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <OnboardingTour />
 
       {/* Header */}
@@ -185,7 +207,7 @@ const ResumeForm = () => {
         </div>
       </header>
 
-      <main className="container max-w-6xl mx-auto px-4 py-8">
+      <main className="container max-w-6xl mx-auto px-4 py-8 flex-1">
         {step < STEPS.length - 1 ? (
           <div className={`flex gap-6 ${showPreview ? "flex-col lg:flex-row" : ""}`}>
             <div className={showPreview ? "lg:w-1/2" : "w-full"}>
@@ -240,14 +262,17 @@ const ResumeForm = () => {
               </div>
             </div>
 
-            {/* Live preview panel */}
+            {/* Live preview panel - desktop only */}
             {showPreview && (
               <div className="lg:w-1/2 hidden lg:block">
                 <div className="sticky top-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-muted-foreground">📄 Prévia em Tempo Real</h3>
                   </div>
-                  <div className="border border-border rounded-xl overflow-hidden shadow-card" style={{ transform: "scale(0.65)", transformOrigin: "top left", width: "153.8%", height: "auto" }}>
+                  <div
+                    className="border border-border rounded-xl overflow-hidden shadow-card"
+                    style={{ transform: "scale(0.65)", transformOrigin: "top left", width: "153.8%", height: "auto" }}
+                  >
                     <ResumePreview data={data} template={template} />
                   </div>
                 </div>
@@ -303,12 +328,71 @@ const ResumeForm = () => {
               </Button>
             </div>
 
-            <div className="overflow-auto pb-8">
-              <ResumePreview data={data} template={template} />
+            {/* Preview — mobile: scroll horizontal livre; desktop: normal */}
+            <div className="w-full overflow-x-auto pb-8 -mx-4 px-4">
+              <div className="min-w-[794px]">
+                <ResumePreview data={data} template={template} />
+              </div>
             </div>
           </div>
         )}
       </main>
+
+      {/* ===== FOOTER: Conheça o Click Fácil / Fale Conosco ===== */}
+      <footer className="bg-hero text-primary-foreground mt-12">
+        {/* About strip */}
+        <div className="container max-w-6xl mx-auto px-4 py-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Brand */}
+            <div>
+              <h3 className="text-lg font-bold font-display mb-2">Click Fácil</h3>
+              <p className="text-sm opacity-75 leading-relaxed">
+                Criamos ferramentas simples e gratuitas para ajudar você a conquistar seu próximo emprego.
+                Rápido, bonito e sem complicação.
+              </p>
+            </div>
+
+            {/* Como funciona */}
+            <div>
+              <h3 className="text-base font-semibold font-display mb-3 flex items-center gap-2">
+                <Info className="w-4 h-4" /> Como funciona
+              </h3>
+              <ul className="space-y-1 text-sm opacity-75">
+                <li>✅ 100% gratuito, sem cadastro</li>
+                <li>✅ Dados salvos no seu navegador</li>
+                <li>✅ Download em PDF e DOCX</li>
+                <li>✅ 5 templates profissionais</li>
+                <li>✅ Funciona no celular e no computador</li>
+              </ul>
+            </div>
+
+            {/* Fale conosco */}
+            <div>
+              <h3 className="text-base font-semibold font-display mb-3 flex items-center gap-2">
+                <Mail className="w-4 h-4" /> Fale Conosco
+              </h3>
+              <p className="text-sm opacity-75 mb-3">
+                Sugestões, dúvidas ou problemas? Manda um e-mail, respondemos rápido!
+              </p>
+              <a
+                href="mailto:contato@clickfacil.com.br"
+                className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 transition-colors px-4 py-2 rounded-lg text-sm font-medium"
+              >
+                <Mail className="w-4 h-4" />
+                contato@clickfacil.com.br
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="border-t border-white/10">
+          <div className="container max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs opacity-50">
+            <span>© {new Date().getFullYear()} Click Fácil. Todos os direitos reservados.</span>
+            <span>Feito com ❤️ para quem busca uma oportunidade</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
