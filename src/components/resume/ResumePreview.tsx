@@ -33,7 +33,7 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
     <div
       id="resume-preview"
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
-      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased" }}
+      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "297mm" }}
     >
       {/* Header */}
       <div className="flex" style={{ backgroundColor: sidebar, color: "white" }}>
@@ -61,7 +61,7 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
       </div>
 
       {/* Body */}
-      <div className="flex" style={{ minHeight: 0 }}>
+      <div className="flex" style={{ flex: 1 }}>
         {/* Sidebar */}
         <div className="w-[32%] py-5 px-4" style={{ backgroundColor: sidebar, color: "white", fontSize: "11px", lineHeight: "1.55" }}>
           <ModernSidebarSection title="CONTATO" accent={accent}>
@@ -197,7 +197,7 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
     <div
       id="resume-preview"
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
-      style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: "12px", lineHeight: "1.65", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased" }}
+      style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: "12px", lineHeight: "1.65", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "297mm" }}
     >
       {/* Header - centered, traditional */}
       <div className="text-center pt-10 pb-5 px-10" style={{ borderBottom: `3px double ${primary}` }}>
@@ -330,7 +330,7 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
     <div
       id="resume-preview"
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
-      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased" }}
+      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "297mm" }}
     >
       {/* Header */}
       <div className="px-10 pt-10 pb-5" style={{ borderBottom: "2px solid #222" }}>
@@ -454,7 +454,7 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
     <div
       id="resume-preview"
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
-      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased" }}
+      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "297mm" }}
     >
       {/* Top accent bar */}
       <div style={{ height: "6px", background: `linear-gradient(90deg, ${primary}, ${accent})` }} />
@@ -587,7 +587,7 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
     <div
       id="resume-preview"
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
-      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased" }}
+      style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "297mm" }}
     >
       {/* Header */}
       <div className="px-10 pt-10 pb-6 flex items-center gap-6" style={{ backgroundColor: dark, color: "white" }}>
