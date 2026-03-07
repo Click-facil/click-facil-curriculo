@@ -10,39 +10,44 @@ interface PhotoUploadProps {
   onPositionChange?: (x: number, y: number, zoom: number) => void;
 }
 
-// Recorta a imagem para proporção 3x4 centralizada usando canvas
+// Recorta a imagem para proporção 3:4 (largura:altura) usando canvas
+// Garante que a saída seja sempre 300x400px sem distorção
 const cropTo3x4 = (dataUrl: string): Promise<string> => {
   return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
-      const targetRatio = 3 / 4; // largura / altura
-      const imgRatio = img.width / img.height;
+      // Proporção alvo: 3 largura para 4 altura
+      const targetW = 3;
+      const targetH = 4;
+      const targetRatio = targetW / targetH; // 0.75
+
+      const imgRatio = img.naturalWidth / img.naturalHeight;
 
       let srcX = 0;
       let srcY = 0;
-      let srcW = img.width;
-      let srcH = img.height;
+      let srcW = img.naturalWidth;
+      let srcH = img.naturalHeight;
 
       if (imgRatio > targetRatio) {
-        // Imagem mais larga que 3x4: recorta as laterais
-        srcW = img.height * targetRatio;
-        srcX = (img.width - srcW) / 2;
-      } else {
-        // Imagem mais alta que 3x4: recorta em cima/baixo
-        srcH = img.width / targetRatio;
-        srcY = (img.height - srcH) / 2;
+        // Foto mais larga que 3:4 → corta laterais
+        srcW = Math.round(img.naturalHeight * targetRatio);
+        srcX = Math.round((img.naturalWidth - srcW) / 2);
+      } else if (imgRatio < targetRatio) {
+        // Foto mais alta que 3:4 → corta topo/base
+        srcH = Math.round(img.naturalWidth / targetRatio);
+        srcY = Math.round((img.naturalHeight - srcH) / 2);
       }
+      // Se já for 3:4 exato, usa tudo
 
       const canvas = document.createElement("canvas");
-      // Saída: 300x400px (proporção 3x4 nítida)
       canvas.width = 300;
       canvas.height = 400;
-
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, 300, 400);
 
       resolve(canvas.toDataURL("image/jpeg", 0.92));
     };
+    img.onerror = () => resolve(dataUrl); // fallback: usa original
     img.src = dataUrl;
   });
 };
@@ -57,11 +62,9 @@ const PhotoUpload = ({ photo, onChange }: PhotoUploadProps) => {
       alert("A foto deve ter no máximo 5MB.");
       return;
     }
-
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const raw = ev.target?.result as string;
-      // Recorta para 3x4 antes de salvar
       const cropped = await cropTo3x4(raw);
       onChange(cropped);
     };
@@ -70,16 +73,17 @@ const PhotoUpload = ({ photo, onChange }: PhotoUploadProps) => {
 
   return (
     <div className="flex flex-col items-center gap-3">
+      {/* Container exatamente 3:4 = w-24(96px) h-32(128px) */}
       <div
         onClick={() => inputRef.current?.click()}
-        className="w-28 h-36 rounded-md border-2 border-dashed border-border hover:border-accent cursor-pointer flex items-center justify-center overflow-hidden bg-secondary transition-colors relative group"
+        className="w-24 h-32 rounded-md border-2 border-dashed border-border hover:border-accent cursor-pointer flex items-center justify-center overflow-hidden bg-secondary transition-colors relative group"
       >
         {photo ? (
           <>
             <img
               src={photo}
               alt="Foto"
-              className="w-full h-full object-cover"
+              style={{ width: "100%", height: "100%", display: "block" }}
             />
             <div className="absolute inset-0 bg-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Camera className="w-6 h-6 text-primary-foreground" />
@@ -88,7 +92,7 @@ const PhotoUpload = ({ photo, onChange }: PhotoUploadProps) => {
         ) : (
           <div className="flex flex-col items-center gap-1 text-muted-foreground">
             <Camera className="w-8 h-8" />
-            <span className="text-xs">Foto 3x4</span>
+            <span className="text-xs text-center">Foto 3x4</span>
           </div>
         )}
       </div>
