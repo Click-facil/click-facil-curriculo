@@ -200,18 +200,22 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
       style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: "12px", lineHeight: "1.65", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "1123px" }}
     >
       {/* Header - centered, traditional */}
-      <div className="text-center pt-10 pb-5 px-10" style={{ borderBottom: `3px double ${primary}` }}>
-        {personalInfo.photo && (
-          <img src={personalInfo.photo} alt="Foto" style={{ width: "96px", height: "128px", display: "block", borderRadius: "6px" }} />
-        )}
-        <h1 className="text-3xl font-bold uppercase" style={{ color: primary, letterSpacing: "0.12em", fontFamily: "'Space Grotesk', serif", wordBreak: "break-word" }}>
-          {personalInfo.fullName || "SEU NOME COMPLETO"}
-        </h1>
-        <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mt-3 text-[11px]" style={{ color: "#555" }}>
-          {personalInfo.phone && <span>📞 {personalInfo.phone}</span>}
-          {personalInfo.email && <span>✉ {personalInfo.email}</span>}
-          {(personalInfo.city || personalInfo.state) && <span>📍 {[personalInfo.city, personalInfo.state].filter(Boolean).join(" - ")}</span>}
-          {personalInfo.linkedin && <span>🔗 {personalInfo.linkedin}</span>}
+      <div className="pt-10 pb-5 px-10" style={{ borderBottom: `3px double ${primary}` }}>
+        <div className="flex items-start gap-6">
+          {personalInfo.photo && (
+            <img src={personalInfo.photo} alt="Foto" className="flex-shrink-0" style={{ width: "96px", height: "128px", display: "block", borderRadius: "6px" }} />
+          )}
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold uppercase" style={{ color: primary, letterSpacing: "0.12em", fontFamily: "'Space Grotesk', serif", wordBreak: "break-word" }}>
+              {personalInfo.fullName || "SEU NOME COMPLETO"}
+            </h1>
+            <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-[11px]" style={{ color: "#555" }}>
+              {personalInfo.phone && <span>📞 {personalInfo.phone}</span>}
+              {personalInfo.email && <span>✉ {personalInfo.email}</span>}
+              {(personalInfo.city || personalInfo.state) && <span>📍 {[personalInfo.city, personalInfo.state].filter(Boolean).join(" - ")}</span>}
+              {personalInfo.linkedin && <span>🔗 {personalInfo.linkedin}</span>}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -476,10 +480,10 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
             <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "#555", wordBreak: "break-word", maxWidth: "480px" }}>{personalInfo.objective}</p>
           )}
           <div className="flex flex-wrap items-center gap-3 mt-3">
-            {personalInfo.phone && <span className="text-[10px] px-2.5 py-1 rounded-full font-medium flex items-center" style={{ backgroundColor: primary, color: "white", height: "24px" }}>📞 {personalInfo.phone}</span>}
-            {personalInfo.email && <span className="text-[10px] px-2.5 py-1 rounded-full font-medium flex items-center" style={{ backgroundColor: primary, color: "white", height: "24px" }}>✉ {personalInfo.email}</span>}
-            {(personalInfo.city || personalInfo.state) && <span className="text-[10px] px-2.5 py-1 rounded-full font-medium flex items-center" style={{ backgroundColor: primary, color: "white", height: "24px" }}>📍 {[personalInfo.city, personalInfo.state].filter(Boolean).join(" - ")}</span>}
-            {personalInfo.linkedin && <span className="text-[10px] px-2.5 py-1 rounded-full font-medium flex items-center" style={{ backgroundColor: primary, color: "white", height: "24px" }}>🔗 {personalInfo.linkedin}</span>}
+            {personalInfo.phone && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>📞 {personalInfo.phone}</span>}
+            {personalInfo.email && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>✉ {personalInfo.email}</span>}
+            {(personalInfo.city || personalInfo.state) && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>📍 {[personalInfo.city, personalInfo.state].filter(Boolean).join(" - ")}</span>}
+            {personalInfo.linkedin && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>🔗 {personalInfo.linkedin}</span>}
           </div>
         </div>
       </div>
