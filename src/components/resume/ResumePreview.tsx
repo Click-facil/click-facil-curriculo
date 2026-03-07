@@ -43,7 +43,7 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
               src={personalInfo.photo}
               alt="Foto 3x4"
               className="w-24 h-32 rounded-md object-cover border-2 shadow-md ring-1 ring-black/10 flex-shrink-0"
-              style={{ borderColor: accent, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%`, transform: `scale(${(personalInfo.photoZoom ?? 100) / 100})`, transformOrigin: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }}
+              style={{ borderColor: accent, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }}
             />
           ) : (
             <div className="w-24 h-32 rounded-md border-2 flex items-center justify-center text-2xl font-bold shadow-md ring-1 ring-black/10" style={{ borderColor: accent, backgroundColor: sidebarDark }}>
@@ -207,7 +207,7 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
       {/* Header - centered, traditional */}
       <div className="text-center pt-10 pb-5 px-10" style={{ borderBottom: `3px double ${primary}` }}>
         {personalInfo.photo && (
-          <img src={personalInfo.photo} alt="Foto 3x4" className="w-24 h-32 rounded-md object-cover mx-auto mb-3 border-2 shadow-md ring-1 ring-black/10" style={{ borderColor: primary, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%`, transform: `scale(${(personalInfo.photoZoom ?? 100) / 100})`, transformOrigin: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
+          <img src={personalInfo.photo} alt="Foto 3x4" className="w-24 h-32 rounded-md object-cover mx-auto mb-3 border-2 shadow-md ring-1 ring-black/10" style={{ borderColor: primary, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
         )}
         <h1 className="text-3xl font-bold uppercase" style={{ color: primary, letterSpacing: "0.12em", fontFamily: "'Space Grotesk', serif", wordBreak: "break-word" }}>
           {personalInfo.fullName || "SEU NOME COMPLETO"}
@@ -341,7 +341,7 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
       <div className="px-10 pt-10 pb-5" style={{ borderBottom: "2px solid #222" }}>
         <div className="flex items-center gap-6">
           {personalInfo.photo && (
-            <img src={personalInfo.photo} alt="Foto 3x4" className="w-24 h-32 rounded-md object-cover shadow-sm ring-1 ring-black/10 flex-shrink-0" style={{ objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%`, transform: `scale(${(personalInfo.photoZoom ?? 100) / 100})`, transformOrigin: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
+            <img src={personalInfo.photo} alt="Foto 3x4" className="w-24 h-32 rounded-md object-cover shadow-sm ring-1 ring-black/10 flex-shrink-0" style={{ objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
           )}
           <div>
             <h1 className="text-2xl font-bold uppercase tracking-widest" style={{ fontFamily: "'Space Grotesk', sans-serif", color: "#222", wordBreak: "break-word" }}>
@@ -467,7 +467,7 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
       {/* Header */}
       <div className="px-10 pt-8 pb-6 flex items-center gap-6" style={{ backgroundColor: bg }}>
         {personalInfo.photo ? (
-          <img src={personalInfo.photo} alt="Foto" className="w-24 h-32 rounded-lg object-cover shadow-md flex-shrink-0" style={{ border: `3px solid ${accent}`, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%`, transform: `scale(${(personalInfo.photoZoom ?? 100) / 100})`, transformOrigin: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
+          <img src={personalInfo.photo} alt="Foto" className="w-24 h-32 rounded-lg object-cover shadow-md flex-shrink-0" style={{ border: `3px solid ${accent}`, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
         ) : (
           <div className="w-24 h-32 rounded-lg flex items-center justify-center text-3xl font-bold shadow-md" style={{ border: `3px solid ${accent}`, backgroundColor: primary, color: "white" }}>
             {personalInfo.fullName ? personalInfo.fullName.charAt(0).toUpperCase() : "?"}
@@ -597,7 +597,7 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
       {/* Header */}
       <div className="px-10 pt-10 pb-6 flex items-center gap-6" style={{ backgroundColor: dark, color: "white" }}>
         {personalInfo.photo ? (
-          <img src={personalInfo.photo} alt="Foto" className="w-24 h-32 rounded object-cover shadow-md flex-shrink-0" style={{ border: `2px solid ${gold}`, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%`, transform: `scale(${(personalInfo.photoZoom ?? 100) / 100})`, transformOrigin: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
+          <img src={personalInfo.photo} alt="Foto" className="w-24 h-32 rounded object-cover shadow-md flex-shrink-0" style={{ border: `2px solid ${gold}`, objectPosition: `${personalInfo.photoPositionX ?? 50}% ${personalInfo.photoPositionY ?? 50}%` }} />
         ) : (
           <div className="w-24 h-32 rounded flex items-center justify-center text-3xl font-bold" style={{ border: `2px solid ${gold}`, backgroundColor: "#16213e", color: gold }}>
             {personalInfo.fullName ? personalInfo.fullName.charAt(0).toUpperCase() : "?"}
