@@ -4,13 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 import { Education } from "@/types/resume";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FieldTooltip from "./FieldTooltip";
 
 interface Props {
   data: Education[];
   onChange: (data: Education[]) => void;
 }
+
+const DEGREE_OPTIONS = [
+  "Ensino Fundamental",
+  "Ensino Médio",
+  "Técnico",
+  "Graduação",
+  "Pós-Graduação",
+  "MBA",
+  "Mestrado",
+  "Doutorado",
+];
 
 const EducationStep = ({ data, onChange }: Props) => {
   const add = () => {
@@ -61,19 +71,15 @@ const EducationStep = ({ data, onChange }: Props) => {
             </div>
             <div>
               <Label>Nível *</Label>
-              <Select value={edu.degree} onValueChange={(v) => update(edu.id, "degree", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Ensino Fundamental">Ensino Fundamental</SelectItem>
-                  <SelectItem value="Ensino Médio">Ensino Médio</SelectItem>
-                  <SelectItem value="Técnico">Técnico</SelectItem>
-                  <SelectItem value="Graduação">Graduação</SelectItem>
-                  <SelectItem value="Pós-Graduação">Pós-Graduação</SelectItem>
-                  <SelectItem value="MBA">MBA</SelectItem>
-                  <SelectItem value="Mestrado">Mestrado</SelectItem>
-                  <SelectItem value="Doutorado">Doutorado</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={edu.degree}
+                onChange={(e) => update(edu.id, "degree", e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {DEGREE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
             </div>
             <div>
               <Label>Início *</Label>
