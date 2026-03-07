@@ -9,10 +9,25 @@ const formatDate = (date: string) => {
   return `${months[parseInt(month) - 1]}/${year}`;
 };
 
+// Converte base64 data URL para Uint8Array para o docx ImageRun
+const dataUrlToUint8Array = (dataUrl: string): Uint8Array => {
+  const base64 = dataUrl.split(",")[1];
+  const binary = atob(base64);
+  const arr = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+  return arr;
+};
+
 export const exportToDocx = async (data: ResumeData) => {
   const { personalInfo, education, experience, courses, skills, languages } = data;
-
   const sections: Paragraph[] = [];
+
+  // Tenta importar ImageRun dinamicamente para evitar erro de tipagem
+  let ImageRun: any = null;
+  try {
+    const docxModule = await import("docx");
+    ImageRun = (docxModule as any).ImageRun;
+  } catch { /* sem foto */ }
 
   // Nome
   sections.push(
@@ -22,6 +37,28 @@ export const exportToDocx = async (data: ResumeData) => {
       spacing: { after: 100 },
     })
   );
+
+  // Foto - inserida como imagem inline se disponível
+  if (personalInfo.photo && ImageRun) {
+    try {
+      const imgData = dataUrlToUint8Array(personalInfo.photo);
+      sections.push(
+        new Paragraph({
+          children: [
+            new ImageRun({
+              data: imgData,
+              transformation: { width: 72, height: 96 },
+              type: personalInfo.photo.includes("image/png") ? "png" : "jpg",
+            }),
+          ],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 100 },
+        })
+      );
+    } catch {
+      // fallback sem foto
+    }
+  }
 
   // Contato
   const contactParts = [
@@ -40,61 +77,32 @@ export const exportToDocx = async (data: ResumeData) => {
     })
   );
 
-  // Nota sobre foto
-  if (personalInfo.photo) {
-    sections.push(
-      new Paragraph({
-        children: [new TextRun({ text: "Foto disponivel no curriculo em PDF", size: 18, font: "Arial", color: "999999", italics: true })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 200 },
-      })
-    );
-  }
-
   // Objetivo
   if (personalInfo.objective) {
     sections.push(sectionTitle("OBJETIVO PROFISSIONAL"));
-    sections.push(
-      new Paragraph({
-        children: [new TextRun({ text: personalInfo.objective, size: 22, font: "Arial" })],
-        spacing: { after: 200 },
-      })
-    );
+    sections.push(new Paragraph({ children: [new TextRun({ text: personalInfo.objective, size: 22, font: "Arial" })], spacing: { after: 200 } }));
   }
 
   // Experiencia
   if (experience.length > 0) {
     sections.push(sectionTitle("EXPERIENCIA PROFISSIONAL"));
     experience.forEach((exp) => {
-      sections.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: exp.position, bold: true, size: 22, font: "Arial" }),
-            new TextRun({ text: ` — ${exp.company}${exp.city ? `, ${exp.city}` : ""}`, size: 22, font: "Arial" }),
-          ],
-          spacing: { before: 100 },
-        })
-      );
-      sections.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${formatDate(exp.startDate)} - ${exp.current ? "Atual" : formatDate(exp.endDate)}`,
-              size: 20,
-              font: "Arial",
-              color: "666666",
-            }),
-          ],
-        })
-      );
+      sections.push(new Paragraph({
+        children: [
+          new TextRun({ text: exp.position, bold: true, size: 22, font: "Arial" }),
+          new TextRun({ text: ` - ${exp.company}${exp.city ? `, ${exp.city}` : ""}`, size: 22, font: "Arial" }),
+        ],
+        spacing: { before: 100 },
+      }));
+      sections.push(new Paragraph({
+        children: [new TextRun({ text: `${formatDate(exp.startDate)} - ${exp.current ? "Atual" : formatDate(exp.endDate)}`, size: 20, font: "Arial", color: "666666" })],
+      }));
       if (exp.description) {
         exp.description.split("\n").filter(Boolean).forEach((line) => {
-          sections.push(
-            new Paragraph({
-              children: [new TextRun({ text: line.replace(/^[-•]\s*/, ""), size: 22, font: "Arial" })],
-              bullet: { level: 0 },
-            })
-          );
+          sections.push(new Paragraph({
+            children: [new TextRun({ text: line.replace(/^[-•]\s*/, ""), size: 22, font: "Arial" })],
+            bullet: { level: 0 },
+          }));
         });
       }
     });
@@ -104,27 +112,16 @@ export const exportToDocx = async (data: ResumeData) => {
   if (education.length > 0) {
     sections.push(sectionTitle("FORMACAO ACADEMICA"));
     education.forEach((edu) => {
-      sections.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: `${edu.degree}: `, bold: true, size: 22, font: "Arial" }),
-            new TextRun({ text: `${edu.course} — ${edu.institution}`, size: 22, font: "Arial" }),
-          ],
-          spacing: { before: 100 },
-        })
-      );
-      sections.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${formatDate(edu.startDate)} - ${edu.current ? "Cursando" : formatDate(edu.endDate)}`,
-              size: 20,
-              font: "Arial",
-              color: "666666",
-            }),
-          ],
-        })
-      );
+      sections.push(new Paragraph({
+        children: [
+          new TextRun({ text: `${edu.degree}: `, bold: true, size: 22, font: "Arial" }),
+          new TextRun({ text: `${edu.course} - ${edu.institution}`, size: 22, font: "Arial" }),
+        ],
+        spacing: { before: 100 },
+      }));
+      sections.push(new Paragraph({
+        children: [new TextRun({ text: `${formatDate(edu.startDate)} - ${edu.current ? "Cursando" : formatDate(edu.endDate)}`, size: 20, font: "Arial", color: "666666" })],
+      }));
     });
   }
 
@@ -132,40 +129,30 @@ export const exportToDocx = async (data: ResumeData) => {
   if (courses.length > 0) {
     sections.push(sectionTitle("CURSOS E CERTIFICACOES"));
     courses.forEach((c) => {
-      sections.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: c.name, bold: true, size: 22, font: "Arial" }),
-            new TextRun({
-              text: ` — ${c.institution}${c.hours || c.year ? ` (${[c.hours, c.year].filter(Boolean).join(", ")})` : ""}`,
-              size: 22,
-              font: "Arial",
-            }),
-          ],
-          bullet: { level: 0 },
-        })
-      );
+      sections.push(new Paragraph({
+        children: [
+          new TextRun({ text: c.name, bold: true, size: 22, font: "Arial" }),
+          new TextRun({ text: ` - ${c.institution}${c.hours || c.year ? ` (${[c.hours, c.year].filter(Boolean).join(", ")})` : ""}`, size: 22, font: "Arial" }),
+        ],
+        bullet: { level: 0 },
+      }));
     });
   }
 
   // Habilidades
   if (skills.length > 0) {
     sections.push(sectionTitle("HABILIDADES"));
-    sections.push(
-      new Paragraph({
-        children: [new TextRun({ text: skills.map((s) => `${s.name} (${s.level})`).join(" • "), size: 22, font: "Arial" })],
-      })
-    );
+    sections.push(new Paragraph({
+      children: [new TextRun({ text: skills.map((s) => `${s.name} (${s.level})`).join(" - "), size: 22, font: "Arial" })],
+    }));
   }
 
   // Idiomas
   if (languages.length > 0) {
     sections.push(sectionTitle("IDIOMAS"));
-    sections.push(
-      new Paragraph({
-        children: [new TextRun({ text: languages.map((l) => `${l.name} — ${l.level}`).join(" • "), size: 22, font: "Arial" })],
-      })
-    );
+    sections.push(new Paragraph({
+      children: [new TextRun({ text: languages.map((l) => `${l.name} - ${l.level}`).join(" - "), size: 22, font: "Arial" })],
+    }));
   }
 
   const doc = new Document({
