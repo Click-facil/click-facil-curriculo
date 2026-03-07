@@ -98,15 +98,13 @@ const ResumeForm = () => {
         return;
       }
 
-      // Salva estilos originais
+      // Força altura A4 completa temporariamente para o PDF não quebrar em 2 páginas
       const originalStyle = element.getAttribute("style") || "";
-
-      // Força largura A4 exata para geração sem distorção
       element.style.width = "794px";
       element.style.maxWidth = "794px";
+      element.style.minHeight = "1123px"; // 297mm em px a 96dpi
       element.style.transform = "none";
 
-      // Aguarda re-render
       await new Promise((r) => setTimeout(r, 300));
 
       const html2pdf = (await import("html2pdf.js")).default;
@@ -124,11 +122,11 @@ const ResumeForm = () => {
             windowWidth: 794,
           },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak: { mode: "avoid-all" },
         })
         .from(element)
         .save();
 
-      // Restaura estilo original
       element.setAttribute("style", originalStyle);
 
       toast.success("Currículo baixado com sucesso!");

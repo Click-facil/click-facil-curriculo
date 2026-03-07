@@ -61,7 +61,7 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
       </div>
 
       {/* Body */}
-      <div className="flex" style={{ flex: 1 }}>
+      <div className="flex" style={{ minHeight: "calc(297mm - 170px)" }}>
         {/* Sidebar */}
         <div className="w-[32%] py-5 px-4" style={{ backgroundColor: sidebar, color: "white", fontSize: "11px", lineHeight: "1.55" }}>
           <ModernSidebarSection title="CONTATO" accent={accent}>
