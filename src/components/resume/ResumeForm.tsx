@@ -97,62 +97,27 @@ const ResumeForm = () => {
         return;
       }
 
-      // Salva e força dimensões A4 exatas
-      const originalStyle = element.getAttribute("style") || "";
-      element.style.width = "794px";
-      element.style.maxWidth = "794px";
-      element.style.minHeight = "1123px";
-      element.style.transform = "none";
-      element.style.position = "relative";
-
-      await new Promise((r) => setTimeout(r, 400));
-
-      // Usa html2canvas para capturar como imagem, depois jsPDF para criar o PDF
-      // Isso evita o problema de quebra de página do html2pdf com flexbox
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: "#ffffff",
-        width: 794,
-        windowWidth: 794,
-        height: element.scrollHeight,
-        windowHeight: element.scrollHeight,
+        logging: false,
+        imageTimeout: 0,
       });
 
-      element.setAttribute("style", originalStyle);
-
-      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
 
-      const pdfW = 210; // mm
-      const pdfH = (canvas.height * pdfW) / canvas.width;
+      const pdfW = 210;
+      const pdfH = 297;
+      const imgW = pdfW;
+      const imgH = (canvas.height * pdfW) / canvas.width;
 
-      // Se couber em uma página, coloca direto
-      if (pdfH <= 297) {
-        pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
-      } else {
-        // Múltiplas páginas se necessário
-        let position = 0;
-        const pageH = 297;
-        const pageHpx = (pageH * canvas.width) / pdfW;
-
-        while (position < canvas.height) {
-          const pageCanvas = document.createElement("canvas");
-          pageCanvas.width = canvas.width;
-          pageCanvas.height = Math.min(pageHpx, canvas.height - position);
-          const ctx = pageCanvas.getContext("2d")!;
-          ctx.drawImage(canvas, 0, position, canvas.width, pageCanvas.height, 0, 0, canvas.width, pageCanvas.height);
-          const pageImg = pageCanvas.toDataURL("image/jpeg", 1.0);
-          const pageImgH = (pageCanvas.height * pdfW) / canvas.width;
-          if (position > 0) pdf.addPage();
-          pdf.addImage(pageImg, "JPEG", 0, 0, pdfW, pageImgH);
-          position += pageHpx;
-        }
-      }
+      pdf.addImage(imgData, "PNG", 0, 0, imgW, imgH);
 
       const fileName = `curriculo-${data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu"}.pdf`;
       pdf.save(fileName);
@@ -169,7 +134,7 @@ const ResumeForm = () => {
   const handleDocxDownload = async () => {
     setGenerating(true);
     try {
-      await exportToDocx(data);
+      await exportToDocx(data, template);
       toast.success("Currículo DOCX baixado com sucesso!");
     } catch (err) {
       console.error(err);
