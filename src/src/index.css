@@ -133,6 +133,28 @@
   }
 }
 
+/* Fix for Radix UI portals (Select, Dialog, etc.) on mobile - inherit CSS vars from html */
+[data-radix-popper-content-wrapper] {
+  --background: 210 20% 98%;
+  --foreground: 220 40% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 40% 13%;
+  --border: 214 20% 88%;
+  --accent: 199 89% 48%;
+  --accent-foreground: 0 0% 100%;
+  --radius: 0.625rem;
+}
+
+html.dark [data-radix-popper-content-wrapper] {
+  --background: 220 40% 7%;
+  --foreground: 210 20% 96%;
+  --popover: 220 35% 11%;
+  --popover-foreground: 210 20% 96%;
+  --border: 220 25% 18%;
+  --accent: 199 89% 48%;
+  --accent-foreground: 0 0% 100%;
+}
+
 /* Print styles for resume */
 @media print {
   body {
