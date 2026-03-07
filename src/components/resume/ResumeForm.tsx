@@ -91,45 +91,71 @@ const ResumeForm = () => {
   const handleDownload = async () => {
     setGenerating(true);
     try {
-      // Garante que o elemento de preview existe e está visível
       const element = document.getElementById("resume-preview");
       if (!element) {
         toast.error("Prévia não encontrada. Tente novamente.");
         return;
       }
 
-      // Salva estilos originais
+      // Salva e força dimensões A4 exatas
       const originalStyle = element.getAttribute("style") || "";
-
-      // Força largura A4 exata para geração sem distorção
       element.style.width = "794px";
       element.style.maxWidth = "794px";
+      element.style.minHeight = "1123px";
       element.style.transform = "none";
+      element.style.position = "relative";
 
-      // Aguarda re-render
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, 400));
 
-      const html2pdf = (await import("html2pdf.js")).default;
+      // Usa html2canvas para capturar como imagem, depois jsPDF para criar o PDF
+      // Isso evita o problema de quebra de página do html2pdf com flexbox
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
 
-      await html2pdf()
-        .set({
-          margin: 0,
-          filename: `curriculo-${data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu"}.pdf`,
-          image: { type: "jpeg", quality: 1 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            width: 794,
-            windowWidth: 794,
-          },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        })
-        .from(element)
-        .save();
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        width: 794,
+        windowWidth: 794,
+        height: element.scrollHeight,
+        windowHeight: element.scrollHeight,
+      });
 
-      // Restaura estilo original
       element.setAttribute("style", originalStyle);
+
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+
+      const pdfW = 210; // mm
+      const pdfH = (canvas.height * pdfW) / canvas.width;
+
+      // Se couber em uma página, coloca direto
+      if (pdfH <= 297) {
+        pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
+      } else {
+        // Múltiplas páginas se necessário
+        let position = 0;
+        const pageH = 297;
+        const pageHpx = (pageH * canvas.width) / pdfW;
+
+        while (position < canvas.height) {
+          const pageCanvas = document.createElement("canvas");
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = Math.min(pageHpx, canvas.height - position);
+          const ctx = pageCanvas.getContext("2d")!;
+          ctx.drawImage(canvas, 0, position, canvas.width, pageCanvas.height, 0, 0, canvas.width, pageCanvas.height);
+          const pageImg = pageCanvas.toDataURL("image/jpeg", 1.0);
+          const pageImgH = (pageCanvas.height * pdfW) / canvas.width;
+          if (position > 0) pdf.addPage();
+          pdf.addImage(pageImg, "JPEG", 0, 0, pdfW, pageImgH);
+          position += pageHpx;
+        }
+      }
+
+      const fileName = `curriculo-${data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu"}.pdf`;
+      pdf.save(fileName);
 
       toast.success("Currículo baixado com sucesso!");
     } catch (err) {
