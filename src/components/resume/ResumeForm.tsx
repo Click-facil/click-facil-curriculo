@@ -97,31 +97,49 @@ const ResumeForm = () => {
         return;
       }
 
+      await document.fonts.ready;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
       const canvas = await html2canvas(element, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#ffffff",
         logging: false,
         imageTimeout: 0,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById("resume-preview");
+          if (!clonedElement) return;
+
+          clonedElement.querySelectorAll<HTMLElement>("span").forEach((el) => {
+            const hasHeight = el.style.height && el.style.height !== "";
+            const hasBg = el.style.backgroundColor && el.style.backgroundColor !== "";
+            
+            if (hasHeight && hasBg) {
+              el.style.display = "flex";
+              el.style.alignItems = "center";
+              el.style.justifyContent = "center";
+              el.style.lineHeight = "1";
+              el.style.paddingTop = "0";
+              el.style.paddingBottom = "0";
+            }
+          });
+        },
       });
 
       const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-
       const pdfW = 210;
-      const pdfH = 297;
-      const imgW = pdfW;
       const imgH = (canvas.height * pdfW) / canvas.width;
-
-      pdf.addImage(imgData, "PNG", 0, 0, imgW, imgH);
+      pdf.addImage(imgData, "PNG", 0, 0, pdfW, imgH);
 
       const fileName = `curriculo-${data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu"}.pdf`;
       pdf.save(fileName);
-
       toast.success("Currículo baixado com sucesso!");
     } catch (err) {
       console.error(err);

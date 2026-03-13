@@ -22,7 +22,90 @@ const ResumePreview = ({ data, template = "modern" }: Props) => {
   return <ModernTemplate data={data} />;
 };
 
-/* ========== MODERN: Two-column sidebar layout ========== */
+/* ========== SVG icons ========== */
+const IconPhone = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012.18 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.91 8.1a16 16 0 006 6l1.46-1.46a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z" />
+  </svg>
+);
+const IconMail = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+    <polyline points="22,6 12,13 2,6" />
+  </svg>
+);
+const IconMap = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+const IconLink = () => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+  </svg>
+);
+
+/**
+ * Badge para o template Criativo.
+ * Usa height fixo + lineHeight igual ao height, SEM padding vertical.
+ * Essa é a única técnica que centraliza texto corretamente no html2canvas 1.4.1.
+ * O padding horizontal é simulado com paddingLeft/paddingRight para não afetar o eixo vertical.
+ */
+const BADGE_H = 22; // altura do badge em px
+
+const CreativeBadge = ({ icon, text, bg }: { icon: React.ReactNode; text: string; bg: string }) => (
+  <span style={{
+    backgroundColor: bg,
+    color: "white",
+    borderRadius: "999px",
+    fontSize: "10px",
+    fontWeight: 500,
+    display: "inline-flex",
+    alignItems: "center",
+    paddingLeft: "10px",
+    paddingRight: "10px",
+    paddingTop: "4px",
+    paddingBottom: "4px",
+    whiteSpace: "nowrap",
+    gap: "5px",
+  }}>
+    {icon}
+    {text}
+  </span>
+);
+
+/**
+ * Badge para o template Executivo (data de experiência e competências).
+ * Mesma técnica: height fixo + lineHeight = height, sem padding vertical.
+ */
+const ExecutiveBadge = ({ text, bg, color, borderRadius = "4px", px = "8px" }: {
+  text: string;
+  bg: string;
+  color: string;
+  borderRadius?: string;
+  px?: string;
+}) => (
+  <span style={{
+    backgroundColor: bg,
+    color,
+    borderRadius,
+    fontSize: "10px",
+    fontWeight: 500,
+    display: "inline-block",
+    height: "20px",
+    lineHeight: "20px",
+    paddingLeft: px,
+    paddingRight: px,
+    whiteSpace: "nowrap",
+    verticalAlign: "middle",
+  }}>
+    {text}
+  </span>
+);
+
+/* ========== MODERN ========== */
 const ModernTemplate = ({ data }: { data: ResumeData }) => {
   const { personalInfo, education, experience, courses, skills, languages } = data;
   const sidebar = "#1a365d";
@@ -35,7 +118,6 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "1123px" }}
     >
-      {/* Header */}
       <div className="flex" style={{ backgroundColor: sidebar, color: "white" }}>
         <div className="w-[32%] flex items-center justify-center py-6 px-4">
           {personalInfo.photo ? (
@@ -52,17 +134,13 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
               {personalInfo.fullName || "SEU NOME COMPLETO"}
             </h1>
             {personalInfo.objective && (
-              <p className="mt-2 text-xs leading-relaxed opacity-85" style={{ wordBreak: "break-word" }}>
-                {personalInfo.objective}
-              </p>
+              <p className="mt-2 text-xs leading-relaxed opacity-85" style={{ wordBreak: "break-word" }}>{personalInfo.objective}</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* Body */}
       <div className="flex" style={{ minHeight: "953px" }}>
-        {/* Sidebar */}
         <div className="w-[32%] py-5 px-4" style={{ backgroundColor: sidebar, color: "white", fontSize: "11px", lineHeight: "1.55", minHeight: "953px" }}>
           <ModernSidebarSection title="CONTATO" accent={accent}>
             <div className="space-y-2.5">
@@ -97,8 +175,8 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
             <ModernSidebarSection title="HABILIDADES" accent={accent}>
               <ul className="space-y-1.5">
                 {skills.map((s) => (
-                  <li key={s.id} className="flex items-start gap-2">
-                    <span style={{ color: accent }} className="mt-0.5">•</span>
+                  <li key={s.id} className="flex items-center gap-2">
+                    <span style={{ color: accent }}>•</span>
                     <span style={{ wordBreak: "break-word" }}>{s.name}</span>
                   </li>
                 ))}
@@ -136,24 +214,21 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
           )}
         </div>
 
-        {/* Content */}
         <div className="w-[68%] py-5 px-6 space-y-5">
           {experience.length > 0 && (
             <MainSection title="EXPERIÊNCIA PROFISSIONAL" color={sidebar}>
               <div className="space-y-4">
                 {experience.map((exp) => (
                   <div key={exp.id}>
-                    <div className="font-bold text-[12px]" style={{ color: "#1a202c", wordBreak: "break-word" }}>
-                      {exp.position}
-                    </div>
+                    <div className="font-bold text-[12px]" style={{ color: "#1a202c", wordBreak: "break-word" }}>{exp.position}</div>
                     <div className="text-[11px] font-medium" style={{ color: "#4a5568" }}>
                       {exp.company}{exp.city ? ` — ${exp.city}` : ""} | {formatDate(exp.startDate)} - {exp.current ? "Atual" : formatDate(exp.endDate)}
                     </div>
                     {exp.description && (
                       <ul className="mt-1.5 space-y-1 text-[11px]" style={{ color: "#4a5568" }}>
                         {exp.description.split("\n").filter(Boolean).map((line, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="mt-1 flex-shrink-0" style={{ color: accent }}>•</span>
+                          <li key={i} className="flex items-center gap-2">
+                            <span className="flex-shrink-0" style={{ color: accent }}>•</span>
                             <span style={{ wordBreak: "break-word" }}>{line.replace(/^[-•]\s*/, "")}</span>
                           </li>
                         ))}
@@ -170,9 +245,7 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
               <div className="space-y-3">
                 {education.map((edu) => (
                   <div key={edu.id}>
-                    <div className="font-bold text-[12px]" style={{ color: "#1a202c", wordBreak: "break-word" }}>
-                      {edu.degree}: {edu.course}
-                    </div>
+                    <div className="font-bold text-[12px]" style={{ color: "#1a202c", wordBreak: "break-word" }}>{edu.degree}: {edu.course}</div>
                     <div className="text-[11px]" style={{ color: "#4a5568" }}>
                       {edu.institution} | {formatDate(edu.startDate)} - {edu.current ? "Cursando" : formatDate(edu.endDate)}
                     </div>
@@ -187,7 +260,7 @@ const ModernTemplate = ({ data }: { data: ResumeData }) => {
   );
 };
 
-/* ========== CLASSIC: Single-column, traditional formal resume ========== */
+/* ========== CLASSIC ========== */
 const ClassicTemplate = ({ data }: { data: ResumeData }) => {
   const { personalInfo, education, experience, courses, skills, languages } = data;
   const primary = "#2c3e50";
@@ -199,7 +272,6 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontSize: "12px", lineHeight: "1.65", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "1123px" }}
     >
-      {/* Header - centered, traditional */}
       <div className="pt-10 pb-5 px-10" style={{ borderBottom: `3px double ${primary}` }}>
         <div className="flex items-start gap-6">
           {personalInfo.photo && (
@@ -210,7 +282,7 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
               {personalInfo.fullName || "SEU NOME COMPLETO"}
             </h1>
             <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-[11px]" style={{ color: "#555" }}>
-              {personalInfo.phone && <span>📞 {personalInfo.phone}</span>}
+              {personalInfo.phone && <span>☎ {personalInfo.phone}</span>}
               {personalInfo.email && <span>✉ {personalInfo.email}</span>}
               {(personalInfo.city || personalInfo.state) && <span>📍 {[personalInfo.city, personalInfo.state].filter(Boolean).join(" - ")}</span>}
               {personalInfo.linkedin && <span>🔗 {personalInfo.linkedin}</span>}
@@ -219,14 +291,12 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
         </div>
       </div>
 
-      {/* Content - single column */}
       <div className="px-10 py-6 space-y-5">
         {personalInfo.objective && (
           <ClassicSection title="Objetivo Profissional" color={primary} accent={accent}>
             <p className="text-[12px] leading-relaxed" style={{ color: "#333", wordBreak: "break-word" }}>{personalInfo.objective}</p>
           </ClassicSection>
         )}
-
         {experience.length > 0 && (
           <ClassicSection title="Experiência Profissional" color={primary} accent={accent}>
             <div className="space-y-4">
@@ -238,14 +308,12 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
                       {formatDate(exp.startDate)} — {exp.current ? "Atual" : formatDate(exp.endDate)}
                     </span>
                   </div>
-                  <div className="text-[11px] italic" style={{ color: "#666" }}>
-                    {exp.company}{exp.city ? `, ${exp.city}` : ""}
-                  </div>
+                  <div className="text-[11px] italic" style={{ color: "#666" }}>{exp.company}{exp.city ? `, ${exp.city}` : ""}</div>
                   {exp.description && (
                     <ul className="mt-1.5 space-y-1 text-[11px]" style={{ color: "#444" }}>
                       {exp.description.split("\n").filter(Boolean).map((line, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-1 flex-shrink-0" style={{ color: accent }}>■</span>
+                        <li key={i} className="flex items-center gap-2">
+                          <span className="flex-shrink-0" style={{ color: accent }}>■</span>
                           <span style={{ wordBreak: "break-word" }}>{line.replace(/^[-•]\s*/, "")}</span>
                         </li>
                       ))}
@@ -256,16 +324,13 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
             </div>
           </ClassicSection>
         )}
-
         {education.length > 0 && (
           <ClassicSection title="Formação Acadêmica" color={primary} accent={accent}>
             <div className="space-y-3">
               {education.map((edu) => (
                 <div key={edu.id}>
                   <div className="flex flex-wrap justify-between items-baseline gap-2">
-                    <span className="font-bold text-[12px]" style={{ color: primary, wordBreak: "break-word" }}>
-                      {edu.degree} — {edu.course}
-                    </span>
+                    <span className="font-bold text-[12px]" style={{ color: primary, wordBreak: "break-word" }}>{edu.degree} — {edu.course}</span>
                     <span className="text-[10px] italic" style={{ color: "#888" }}>
                       {formatDate(edu.startDate)} — {edu.current ? "Cursando" : formatDate(edu.endDate)}
                     </span>
@@ -276,7 +341,6 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
             </div>
           </ClassicSection>
         )}
-
         {courses.length > 0 && (
           <ClassicSection title="Cursos e Certificações" color={primary} accent={accent}>
             <div className="space-y-2">
@@ -285,23 +349,19 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
                   <span className="text-[11px]" style={{ wordBreak: "break-word" }}>
                     <span className="font-bold" style={{ color: primary }}>{c.name}</span> — {c.institution}
                   </span>
-                  <span className="text-[10px] italic" style={{ color: "#888" }}>
-                    {[c.hours, c.year].filter(Boolean).join(" | ")}
-                  </span>
+                  <span className="text-[10px] italic" style={{ color: "#888" }}>{[c.hours, c.year].filter(Boolean).join(" | ")}</span>
                 </div>
               ))}
             </div>
           </ClassicSection>
         )}
-
-        {/* Two columns for skills and languages */}
         <div className="grid grid-cols-2 gap-8">
           {skills.length > 0 && (
             <ClassicSection title="Habilidades" color={primary} accent={accent}>
               <ul className="space-y-1">
                 {skills.map((s) => (
-                  <li key={s.id} className="text-[11px] flex items-start gap-2" style={{ color: "#444" }}>
-                    <span style={{ color: accent }} className="mt-0.5">■</span>
+                  <li key={s.id} className="text-[11px] flex items-center gap-2" style={{ color: "#444" }}>
+                    <span style={{ color: accent }}>■</span>
                     <span style={{ wordBreak: "break-word" }}>{s.name}</span>
                   </li>
                 ))}
@@ -326,7 +386,7 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
   );
 };
 
-/* ========== MINIMAL: Clean, modern flat design, no sidebar ========== */
+/* ========== MINIMAL ========== */
 const MinimalTemplate = ({ data }: { data: ResumeData }) => {
   const { personalInfo, education, experience, courses, skills, languages } = data;
 
@@ -336,7 +396,6 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "1123px" }}
     >
-      {/* Header */}
       <div className="px-10 pt-10 pb-5" style={{ borderBottom: "2px solid #222" }}>
         <div className="flex items-center gap-6">
           {personalInfo.photo && (
@@ -362,7 +421,6 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
             <p className="text-[12px] leading-relaxed" style={{ color: "#444", wordBreak: "break-word" }}>{personalInfo.objective}</p>
           </MinimalSection>
         )}
-
         {experience.length > 0 && (
           <MinimalSection title="EXPERIÊNCIA PROFISSIONAL">
             <div className="space-y-4">
@@ -375,8 +433,8 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
                   {exp.description && (
                     <ul className="mt-1.5 space-y-1 text-[11px]" style={{ color: "#444" }}>
                       {exp.description.split("\n").filter(Boolean).map((line, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-1 flex-shrink-0" style={{ color: "#999" }}>•</span>
+                        <li key={i} className="flex items-center gap-2">
+                          <span className="flex-shrink-0" style={{ color: "#999" }}>•</span>
                           <span style={{ wordBreak: "break-word" }}>{line.replace(/^[-•]\s*/, "")}</span>
                         </li>
                       ))}
@@ -387,7 +445,6 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
             </div>
           </MinimalSection>
         )}
-
         {education.length > 0 && (
           <MinimalSection title="FORMAÇÃO">
             <div className="space-y-2.5">
@@ -403,7 +460,6 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
             </div>
           </MinimalSection>
         )}
-
         {courses.length > 0 && (
           <MinimalSection title="CURSOS">
             <div className="space-y-1.5">
@@ -417,7 +473,6 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
             </div>
           </MinimalSection>
         )}
-
         <div className="grid grid-cols-2 gap-8">
           {skills.length > 0 && (
             <MinimalSection title="HABILIDADES">
@@ -447,7 +502,7 @@ const MinimalTemplate = ({ data }: { data: ResumeData }) => {
   );
 };
 
-/* ========== CREATIVE: Bold, colorful, two-column with accent bar ========== */
+/* ========== CREATIVE ========== */
 const CreativeTemplate = ({ data }: { data: ResumeData }) => {
   const { personalInfo, education, experience, courses, skills, languages } = data;
   const primary = "#6c3483";
@@ -460,10 +515,8 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "1123px" }}
     >
-      {/* Top accent bar */}
       <div style={{ height: "6px", background: `linear-gradient(90deg, ${primary}, ${accent})` }} />
 
-      {/* Header */}
       <div className="px-10 pt-8 pb-6 flex items-center gap-6" style={{ backgroundColor: bg }}>
         {personalInfo.photo ? (
           <img src={personalInfo.photo} alt="Foto" style={{ width: "96px", height: "128px", display: "block", borderRadius: "6px" }} />
@@ -479,18 +532,16 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
           {personalInfo.objective && (
             <p className="mt-2 text-[11px] leading-relaxed" style={{ color: "#555", wordBreak: "break-word", maxWidth: "480px" }}>{personalInfo.objective}</p>
           )}
-          <div className="flex flex-wrap items-center gap-3 mt-3">
-            {personalInfo.phone && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>📞 {personalInfo.phone}</span>}
-            {personalInfo.email && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>✉ {personalInfo.email}</span>}
-            {(personalInfo.city || personalInfo.state) && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>📍 {[personalInfo.city, personalInfo.state].filter(Boolean).join(" - ")}</span>}
-            {personalInfo.linkedin && <span className="text-[10px] px-2.5 rounded-full font-medium flex items-center justify-center" style={{ backgroundColor: primary, color: "white", height: "24px", lineHeight: "24px", paddingTop: "1px", paddingBottom: "1px" }}>🔗 {personalInfo.linkedin}</span>}
+          <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-[11px]" style={{ color: primary, fontWeight: 500 }}>
+            {personalInfo.phone && <span>☎ {personalInfo.phone}</span>}
+            {personalInfo.email && <span>✉ {personalInfo.email}</span>}
+            {(personalInfo.city || personalInfo.state) && <span>📍 {[personalInfo.city, personalInfo.state].filter(Boolean).join(" - ")}</span>}
+            {personalInfo.linkedin && <span>🔗 {personalInfo.linkedin}</span>}
           </div>
         </div>
       </div>
 
-      {/* Body - two columns */}
       <div className="flex px-10 py-6 gap-8">
-        {/* Main column */}
         <div className="w-[65%] space-y-5">
           {experience.length > 0 && (
             <CreativeSection title="Experiência" color={primary} accent={accent}>
@@ -504,8 +555,8 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
                     {exp.description && (
                       <ul className="mt-1.5 space-y-1 text-[11px]" style={{ color: "#444" }}>
                         {exp.description.split("\n").filter(Boolean).map((line, i) => (
-                          <li key={i} className="flex items-start gap-2">
-                            <span className="mt-1 flex-shrink-0" style={{ color: accent }}>▸</span>
+                          <li key={i} className="flex items-center gap-2">
+                            <span className="flex-shrink-0" style={{ color: accent }}>▸</span>
                             <span style={{ wordBreak: "break-word" }}>{line.replace(/^[-•]\s*/, "")}</span>
                           </li>
                         ))}
@@ -516,7 +567,6 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
               </div>
             </CreativeSection>
           )}
-
           {education.length > 0 && (
             <CreativeSection title="Formação" color={primary} accent={accent}>
               <div className="space-y-3">
@@ -533,20 +583,19 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
           )}
         </div>
 
-        {/* Side column */}
         <div className="w-[35%] space-y-5">
           {skills.length > 0 && (
             <CreativeSection title="Habilidades" color={primary} accent={accent}>
-              <div className="flex flex-wrap gap-1.5">
+              <ul className="space-y-1.5">
                 {skills.map((s) => (
-                  <span key={s.id} className="text-[10px] px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: bg, color: primary, border: `1px solid ${accent}`, wordBreak: "break-word" }}>
-                    {s.name}
-                  </span>
+                  <li key={s.id} className="flex items-center gap-2" style={{ fontSize: "11px", color: "#444" }}>
+                    <span style={{ color: accent }}>•</span>
+                    <span style={{ wordBreak: "break-word" }}>{s.name}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </CreativeSection>
           )}
-
           {languages.length > 0 && (
             <CreativeSection title="Idiomas" color={primary} accent={accent}>
               <div className="space-y-2">
@@ -562,7 +611,6 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
               </div>
             </CreativeSection>
           )}
-
           {courses.length > 0 && (
             <CreativeSection title="Cursos" color={primary} accent={accent}>
               <div className="space-y-2">
@@ -581,7 +629,7 @@ const CreativeTemplate = ({ data }: { data: ResumeData }) => {
   );
 };
 
-/* ========== EXECUTIVE: Elegant, dark header, sophisticated ========== */
+/* ========== EXECUTIVE ========== */
 const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
   const { personalInfo, education, experience, courses, skills, languages } = data;
   const dark = "#1a1a2e";
@@ -593,7 +641,6 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
       className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Inter', sans-serif", fontSize: "12px", lineHeight: "1.6", letterSpacing: "0.01em", textRendering: "optimizeLegibility", WebkitFontSmoothing: "antialiased", minHeight: "1123px" }}
     >
-      {/* Header */}
       <div className="px-10 pt-10 pb-6 flex items-center gap-6" style={{ backgroundColor: dark, color: "white" }}>
         {personalInfo.photo ? (
           <img src={personalInfo.photo} alt="Foto" style={{ width: "96px", height: "128px", display: "block", borderRadius: "6px" }} />
@@ -616,7 +663,6 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
       </div>
       <div style={{ height: "3px", backgroundColor: gold }} />
 
-      {/* Body */}
       <div className="px-10 py-6 space-y-5">
         {personalInfo.objective && (
           <ExecutiveSection title="Perfil Profissional" color={dark} accent={gold}>
@@ -629,9 +675,9 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
             <div className="space-y-4">
               {experience.map((exp) => (
                 <div key={exp.id}>
-                  <div className="flex flex-wrap justify-between items-baseline gap-2">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <span className="font-bold text-[12px]" style={{ color: dark, wordBreak: "break-word" }}>{exp.position}</span>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded" style={{ backgroundColor: dark, color: gold }}>
+                    <span className="text-[10px]" style={{ color: "#888" }}>
                       {formatDate(exp.startDate)} — {exp.current ? "Atual" : formatDate(exp.endDate)}
                     </span>
                   </div>
@@ -641,8 +687,8 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
                   {exp.description && (
                     <ul className="mt-1.5 space-y-1 text-[11px]" style={{ color: "#444" }}>
                       {exp.description.split("\n").filter(Boolean).map((line, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-0.5 flex-shrink-0 text-[8px]" style={{ color: gold }}>◆</span>
+                        <li key={i} className="flex items-center gap-2">
+                          <span className="flex-shrink-0 text-[8px]" style={{ color: gold }}>◆</span>
                           <span style={{ wordBreak: "break-word" }}>{line.replace(/^[-•]\s*/, "")}</span>
                         </li>
                       ))}
@@ -690,13 +736,14 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
         <div className="grid grid-cols-2 gap-8">
           {skills.length > 0 && (
             <ExecutiveSection title="Competências" color={dark} accent={gold}>
-              <div className="flex flex-wrap gap-2">
+              <ul className="space-y-1.5">
                 {skills.map((s) => (
-                  <span key={s.id} className="text-[10px] px-3 py-1 rounded font-medium" style={{ backgroundColor: dark, color: gold, wordBreak: "break-word" }}>
-                    {s.name}
-                  </span>
+                  <li key={s.id} className="flex items-center gap-2" style={{ fontSize: "11px", color: "#444" }}>
+                    <span style={{ color: gold }}>◆</span>
+                    <span style={{ wordBreak: "break-word" }}>{s.name}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </ExecutiveSection>
           )}
           {languages.length > 0 && (
@@ -720,8 +767,7 @@ const ExecutiveTemplate = ({ data }: { data: ResumeData }) => {
   );
 };
 
-
-
+/* ========== Shared section components ========== */
 const ModernSidebarSection = ({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) => (
   <div className="mb-5">
     <h2 className="text-[11px] font-bold uppercase tracking-wider pb-1.5 mb-3 border-b" style={{ borderColor: accent, fontFamily: "'Space Grotesk', sans-serif" }}>
