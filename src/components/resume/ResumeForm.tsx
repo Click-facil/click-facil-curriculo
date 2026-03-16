@@ -15,7 +15,6 @@ import SkillsStep from "./SkillsStep";
 import ResumePreview from "./ResumePreview";
 import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
-import PaymentModal from "./PaymentModal";
 import { toast } from "sonner";
 import { exportToDocx } from "@/lib/docx-export";
 import {
