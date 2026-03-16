@@ -15,11 +15,10 @@ import SkillsStep from "./SkillsStep";
 import ResumePreview from "./ResumePreview";
 import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
+import CheckoutModal from "./CheckoutModal";
 import { toast } from "sonner";
 import { exportToDocx } from "@/lib/docx-export";
-import {
-  auth, onAuthChange, logout, checkPremium, grantPremium,
-} from "@/lib/firebase";
+import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 
 const STEPS = ["Dados Pessoais", "Formação", "Experiência", "Cursos", "Habilidades", "Finalizar"];
@@ -29,14 +28,25 @@ const TEMPLATE_KEY = "clickfacil_template";
 export type TemplateStyle = "modern" | "classic" | "minimal" | "creative" | "executive";
 
 const TEMPLATES: { id: TemplateStyle; name: string; description: string; free: boolean }[] = [
-  { id: "classic",   name: "Clássico",     description: "Coluna única, serifado e formal", free: true  },
-  { id: "minimal",   name: "Minimalista",  description: "Flat design, clean e direto",     free: true  },
-  { id: "modern",    name: "Moderno",      description: "Sidebar lateral com ícones",      free: false },
-  { id: "creative",  name: "Criativo",     description: "Colorido e ousado",               free: false },
-  { id: "executive", name: "Executivo",    description: "Elegante e sofisticado",          free: false },
+  { id: "classic",   name: "Clássico",    description: "Coluna única, serifado e formal", free: true  },
+  { id: "minimal",   name: "Minimalista", description: "Flat design, clean e direto",     free: true  },
+  { id: "modern",    name: "Moderno",     description: "Sidebar lateral com ícones",      free: false },
+  { id: "creative",  name: "Criativo",    description: "Colorido e ousado",               free: false },
+  { id: "executive", name: "Executivo",   description: "Elegante e sofisticado",          free: false },
 ];
 
 const PREMIUM_TEMPLATES: TemplateStyle[] = ["modern", "creative", "executive"];
+
+/**
+ * ⚠️  ADMIN: adicione aqui os UIDs do Firebase dos usuários admin.
+ * Para descobrir o seu UID após logar no site:
+ *   Abra o console do browser (F12) e cole:
+ *   (await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js')).getAuth().currentUser?.uid
+ *   OU veja no Firebase Console → Authentication → Users
+ */
+const ADMIN_UIDS: string[] = [
+  // "cole-seu-uid-aqui",
+];
 
 const ResumeForm = () => {
   const [step, setStep] = useState(0);
@@ -44,52 +54,56 @@ const ResumeForm = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       return saved ? JSON.parse(saved) : emptyResume;
-    } catch {
-      return emptyResume;
-    }
+    } catch { return emptyResume; }
   });
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [template, setTemplate] = useState<TemplateStyle>(() => {
-    return (localStorage.getItem(TEMPLATE_KEY) as TemplateStyle) || "classic";
-  });
+  const [template, setTemplate] = useState<TemplateStyle>(
+    () => (localStorage.getItem(TEMPLATE_KEY) as TemplateStyle) || "classic"
+  );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  // ── Auth / premium state ────────────────────────────────────────────────────
+  // ── Auth / premium ──────────────────────────────────────────────────────────
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isPremium, setIsPremium] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  // Ação pendente após login: "download-pdf" | "download-docx" | "select-template"
+  const [showCheckout, setShowCheckout] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
 
-  // Ouve mudanças de auth e verifica premium no Firestore
   useEffect(() => {
     const unsub = onAuthChange(async (u) => {
       setUser(u);
       if (u) {
-        const premium = await checkPremium(u.uid);
-        setIsPremium(premium);
+        const admin = ADMIN_UIDS.includes(u.uid);
+        setIsAdmin(admin);
+        if (admin) {
+          setIsPremium(true);
+        } else {
+          const premium = await checkPremium(u.uid);
+          setIsPremium(premium);
+        }
       } else {
+        setIsAdmin(false);
         setIsPremium(false);
       }
     });
     return unsub;
   }, []);
 
-  // Detecta retorno do Mercado Pago (?payment=success)
+  // Detecta retorno do MP (?payment=success) — fallback para cartão
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("payment") === "success" && user) {
+    if (params.get("payment") === "success" && user && !isAdmin) {
       grantPremium(user.uid).then(() => {
         setIsPremium(true);
         toast.success("🎉 Pagamento confirmado! Acesso premium liberado.");
         window.history.replaceState({}, "", "/");
       });
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
-  // Autosave no localStorage
+  // Autosave
   useEffect(() => {
     const t = setTimeout(() => {
       try {
@@ -100,71 +114,56 @@ const ResumeForm = () => {
     return () => clearTimeout(t);
   }, [data]);
 
-  useEffect(() => {
-    localStorage.setItem(TEMPLATE_KEY, template);
-  }, [template]);
+  useEffect(() => { localStorage.setItem(TEMPLATE_KEY, template); }, [template]);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  const isPremiumTemplate = (t: TemplateStyle) => PREMIUM_TEMPLATES.includes(t);
+  const hasAccess = useCallback((t: TemplateStyle) => {
+    if (!PREMIUM_TEMPLATES.includes(t)) return true;
+    if (isAdmin) return true;
+    if (isPremium) return true;
+    return false;
+  }, [isAdmin, isPremium]);
 
-  /**
-   * Garante que o usuário está logado e tem premium antes de executar ação.
-   * Se não logado → abre AuthModal (salva ação pendente).
-   * Se logado mas sem premium → abre PaymentModal.
-   */
-  const requirePremium = (action: string): boolean => {
+  const requireAccess = (action: string): boolean => {
     if (!user) {
       setPendingAction(action);
       setShowAuth(true);
       return false;
     }
-    if (!isPremium) {
+    if (!isPremium && !isAdmin) {
       setPendingAction(action);
-      setShowPayment(true);
+      setShowCheckout(true);
       return false;
     }
     return true;
   };
 
-  /** Executado após login bem-sucedido no AuthModal */
   const handleAuthSuccess = async () => {
     setShowAuth(false);
     const currentUser = auth.currentUser;
     if (!currentUser) return;
+    const admin = ADMIN_UIDS.includes(currentUser.uid);
+    setIsAdmin(admin);
+    if (admin) {
+      setIsPremium(true);
+      executePendingAction();
+      return;
+    }
     const premium = await checkPremium(currentUser.uid);
     setIsPremium(premium);
-
     if (!premium) {
-      // Ainda precisa pagar
-      setShowPayment(true);
+      setShowCheckout(true);
     } else {
-      // Já era premium — executa ação pendente
       executePendingAction();
     }
   };
 
-  /** Executado quando usuário clica "Já paguei" no PaymentModal */
-  const handleAlreadyPaid = async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      toast.error("Faça login primeiro.");
-      return;
-    }
-    const premium = await checkPremium(currentUser.uid);
-    if (premium) {
-      setIsPremium(true);
-      setShowPayment(false);
-      toast.success("Acesso premium confirmado! 🎉");
-      executePendingAction();
-    } else {
-      // Fallback: marca premium localmente (webhook pode ter atrasado)
-      await grantPremium(currentUser.uid);
-      setIsPremium(true);
-      setShowPayment(false);
-      toast.success("Acesso premium liberado! 🎉");
-      executePendingAction();
-    }
+  const handleCheckoutSuccess = () => {
+    setShowCheckout(false);
+    setIsPremium(true);
+    toast.success("🎉 Acesso premium liberado!");
+    executePendingAction();
   };
 
   const executePendingAction = () => {
@@ -172,16 +171,15 @@ const ResumeForm = () => {
     if (pendingAction === "download-pdf") handleDownload(true);
     if (pendingAction === "download-docx") handleDocxDownload(true);
     if (pendingAction?.startsWith("select-template:")) {
-      const t = pendingAction.split(":")[1] as TemplateStyle;
-      setTemplate(t);
+      setTemplate(pendingAction.split(":")[1] as TemplateStyle);
     }
     setPendingAction(null);
   };
 
   const handleSelectTemplate = (t: TemplateStyle) => {
-    if (isPremiumTemplate(t) && !isPremium) {
+    if (!hasAccess(t)) {
       setPendingAction(`select-template:${t}`);
-      if (!user) { setShowAuth(true); } else { setShowPayment(true); }
+      if (!user) { setShowAuth(true); } else { setShowCheckout(true); }
       return;
     }
     setTemplate(t);
@@ -189,7 +187,6 @@ const ResumeForm = () => {
 
   const getProgress = useCallback(() => {
     let filled = 0;
-    const total = 9;
     const pi = data.personalInfo;
     if (pi.fullName) filled++;
     if (pi.email) filled++;
@@ -200,7 +197,7 @@ const ResumeForm = () => {
     if (data.education.length > 0) filled++;
     if (data.experience.length > 0) filled++;
     if (data.skills.length > 0) filled++;
-    return Math.round((filled / total) * 100);
+    return Math.round((filled / 9) * 100);
   }, [data]);
 
   const next = () => {
@@ -213,27 +210,23 @@ const ResumeForm = () => {
     }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   };
-
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
-  // ── Download handlers ────────────────────────────────────────────────────────
+  // ── Downloads ────────────────────────────────────────────────────────────────
 
   const handleDownload = async (skipCheck = false) => {
-    if (!skipCheck && isPremiumTemplate(template) && !isPremium) {
-      requirePremium("download-pdf");
+    if (!skipCheck && !hasAccess(template)) {
+      requireAccess("download-pdf");
       return;
     }
     setGenerating(true);
     try {
       const element = document.getElementById("resume-preview");
       if (!element) { toast.error("Prévia não encontrada."); return; }
-
       await document.fonts.ready;
       await new Promise((r) => setTimeout(r, 300));
-
       const domtoimage = (await import("dom-to-image-more")).default;
       const { jsPDF } = await import("jspdf");
-
       const scale = 3;
       const imgData = await domtoimage.toPng(element, {
         width: element.offsetWidth * scale,
@@ -245,12 +238,10 @@ const ResumeForm = () => {
           height: `${element.offsetHeight}px`,
         },
       });
-
       const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       const pdfW = 210;
       const pdfH = (element.offsetHeight * pdfW) / element.offsetWidth;
       pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
-
       const name = data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu";
       pdf.save(`curriculo-${name}.pdf`);
       toast.success("Currículo baixado com sucesso!");
@@ -263,14 +254,14 @@ const ResumeForm = () => {
   };
 
   const handleDocxDownload = async (skipCheck = false) => {
-    if (!skipCheck && isPremiumTemplate(template) && !isPremium) {
-      requirePremium("download-docx");
+    if (!skipCheck && !hasAccess(template)) {
+      requireAccess("download-docx");
       return;
     }
     setGenerating(true);
     try {
       await exportToDocx(data, template);
-      toast.success("Currículo DOCX baixado com sucesso!");
+      toast.success("Currículo DOCX baixado!");
     } catch (err) {
       console.error(err);
       toast.error("Erro ao gerar DOCX.");
@@ -290,13 +281,10 @@ const ResumeForm = () => {
 
   const progress = getProgress();
 
-  // ── Render ───────────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <OnboardingTour />
 
-      {/* Modais */}
       {showAuth && (
         <AuthModal
           context="premium"
@@ -304,14 +292,15 @@ const ResumeForm = () => {
           onSuccess={handleAuthSuccess}
         />
       )}
-      {showPayment && (
-        <PaymentModal
-          onClose={() => { setShowPayment(false); setPendingAction(null); }}
-          onAlreadyPaid={handleAlreadyPaid}
+      {showCheckout && user && (
+        <CheckoutModal
+          uid={user.uid}
+          email={user.email || ""}
+          onClose={() => { setShowCheckout(false); setPendingAction(null); }}
+          onSuccess={handleCheckoutSuccess}
         />
       )}
 
-      {/* Header */}
       <header className="bg-hero text-primary-foreground py-6 shadow-elevated">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between">
@@ -327,22 +316,16 @@ const ResumeForm = () => {
                   <Save className="w-3 h-3" /> Salvo automaticamente
                 </span>
               )}
-              {/* User info / login */}
               {user ? (
                 <div className="flex items-center gap-2">
-                  {isPremium && (
-                    <span className="text-xs bg-amber-400 text-amber-900 font-bold px-2 py-0.5 rounded-full">
-                      PREMIUM
-                    </span>
+                  {isAdmin && (
+                    <span className="text-xs bg-red-400 text-white font-bold px-2 py-0.5 rounded-full">ADMIN</span>
                   )}
-                  <span className="text-xs opacity-70 hidden sm:block">
-                    {user.displayName || user.email}
-                  </span>
-                  <button
-                    onClick={() => logout()}
-                    title="Sair"
-                    className="opacity-60 hover:opacity-100 transition"
-                  >
+                  {isPremium && !isAdmin && (
+                    <span className="text-xs bg-amber-400 text-amber-900 font-bold px-2 py-0.5 rounded-full">PREMIUM</span>
+                  )}
+                  <span className="text-xs opacity-70 hidden sm:block">{user.displayName || user.email}</span>
+                  <button onClick={() => logout()} title="Sair" className="opacity-60 hover:opacity-100 transition">
                     <LogOut className="w-4 h-4" />
                   </button>
                 </div>
@@ -357,8 +340,6 @@ const ResumeForm = () => {
               <ThemeToggle />
             </div>
           </div>
-
-          {/* Progress */}
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs opacity-80 mb-1">
               <span>Progresso do currículo</span>
@@ -382,7 +363,6 @@ const ResumeForm = () => {
           <div className={`flex gap-6 ${showPreview ? "flex-col lg:flex-row" : ""}`}>
             <div className={showPreview ? "lg:w-1/2" : "w-full"}>
               <StepIndicator steps={STEPS} currentStep={step} />
-
               <div className="bg-card rounded-xl shadow-card p-6 md:p-8 border border-border">
                 {step === 0 && <PersonalInfoStep data={data.personalInfo} onChange={(personalInfo) => setData({ ...data, personalInfo })} />}
                 {step === 1 && <EducationStep data={data.education} onChange={(education) => setData({ ...data, education })} />}
@@ -396,19 +376,12 @@ const ResumeForm = () => {
                     onLanguagesChange={(languages) => setData({ ...data, languages })}
                   />
                 )}
-
                 <div className="flex justify-between mt-8 pt-6 border-t border-border">
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={prev} disabled={step === 0}>
                       <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowPreview(!showPreview)}
-                      title={showPreview ? "Ocultar prévia" : "Ver prévia"}
-                      className="hidden lg:flex"
-                    >
+                    <Button variant="ghost" size="icon" onClick={() => setShowPreview(!showPreview)} className="hidden lg:flex">
                       {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
                   </div>
@@ -421,26 +394,18 @@ const ResumeForm = () => {
                   </Button>
                 </div>
               </div>
-
-              {/* Convite para criar conta — só para não logados */}
               {!user && (
                 <div className="mt-4 p-4 rounded-xl border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 flex items-center justify-between gap-4">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    💡 <strong>Crie uma conta grátis</strong> para salvar seu currículo e acessá-lo de qualquer dispositivo.
+                    💡 <strong>Crie uma conta grátis</strong> para salvar seu currículo em qualquer dispositivo.
                   </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-shrink-0 border-blue-400 text-blue-700 hover:bg-blue-100"
-                    onClick={() => { setPendingAction(null); setShowAuth(true); }}
-                  >
+                  <Button size="sm" variant="outline" className="flex-shrink-0 border-blue-400 text-blue-700 hover:bg-blue-100"
+                    onClick={() => { setPendingAction(null); setShowAuth(true); }}>
                     Criar grátis
                   </Button>
                 </div>
               )}
             </div>
-
-            {/* Live preview */}
             {showPreview && (
               <div className="lg:w-1/2 hidden lg:block">
                 <div className="sticky top-4">
@@ -456,7 +421,6 @@ const ResumeForm = () => {
             )}
           </div>
         ) : (
-          /* ── Tela final ─────────────────────────────────────────────────── */
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
@@ -469,18 +433,17 @@ const ResumeForm = () => {
                 </Button>
                 <Button variant="outline" onClick={() => handleDocxDownload()} disabled={generating}>
                   <FileText className="w-4 h-4 mr-2" />
-                  {isPremiumTemplate(template) && !isPremium && <Lock className="w-3 h-3 mr-1 opacity-60" />}
+                  {!hasAccess(template) && <Lock className="w-3 h-3 mr-1 opacity-60" />}
                   DOCX
                 </Button>
                 <Button onClick={() => handleDownload()} disabled={generating}>
                   <Download className="w-4 h-4 mr-2" />
-                  {isPremiumTemplate(template) && !isPremium && <Lock className="w-3 h-3 mr-1 opacity-60" />}
+                  {!hasAccess(template) && <Lock className="w-3 h-3 mr-1 opacity-60" />}
                   {generating ? "Gerando..." : "Baixar PDF"}
                 </Button>
               </div>
             </div>
 
-            {/* Template selector */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Palette className="w-4 h-4 text-muted-foreground" />
@@ -488,7 +451,7 @@ const ResumeForm = () => {
               </div>
               <div className="flex flex-wrap gap-3">
                 {TEMPLATES.map((t) => {
-                  const locked = !t.free && !isPremium;
+                  const locked = !hasAccess(t.id);
                   const active = template === t.id;
                   return (
                     <button
@@ -500,36 +463,30 @@ const ResumeForm = () => {
                           : "bg-card text-foreground border-border hover:border-primary/50"
                       }`}
                     >
-                      {locked && (
-                        <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-50" />
-                      )}
+                      {locked && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-50" />}
                       {t.name}
                       <span className="block text-[10px] opacity-70">{t.description}</span>
                       {t.free ? (
                         <span className="block text-[9px] text-green-600 font-bold">GRÁTIS</span>
                       ) : (
                         <span className="block text-[9px] text-amber-600 font-bold">
-                          {isPremium ? "PREMIUM ✓" : "PREMIUM — R$9,90"}
+                          {hasAccess(t.id) ? "PREMIUM ✓" : "PREMIUM — R$9,90"}
                         </span>
                       )}
                     </button>
                   );
                 })}
               </div>
-
-              {/* Upsell banner — só para não premium */}
-              {!isPremium && (
+              {!isPremium && !isAdmin && (
                 <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-amber-900 text-sm">✨ Desbloqueie os 3 templates premium por apenas R$&nbsp;9,90</p>
-                    <p className="text-xs text-amber-700">Pagamento único · acesso vitalício · currículo salvo na nuvem</p>
+                    <p className="text-xs text-amber-700">Pagamento único · acesso vitalício · PIX ou cartão</p>
                   </div>
                   <Button
                     size="sm"
                     className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
-                    onClick={() => {
-                      if (!user) { setShowAuth(true); } else { setShowPayment(true); }
-                    }}
+                    onClick={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
                   >
                     Desbloquear agora
                   </Button>
@@ -543,7 +500,6 @@ const ResumeForm = () => {
               </Button>
             </div>
 
-            {/* Preview */}
             <div className="w-full overflow-x-auto pb-8 -mx-4 px-4">
               <div className="min-w-[794px]">
                 <ResumePreview data={data} template={template} />
@@ -553,14 +509,13 @@ const ResumeForm = () => {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="bg-hero text-primary-foreground mt-12">
         <div className="container max-w-6xl mx-auto px-4 py-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-lg font-bold font-display mb-2">Click Fácil</h3>
               <p className="text-sm opacity-75 leading-relaxed">
-                Criamos ferramentas simples e gratuitas para ajudar você a conquistar seu próximo emprego.
+                Ferramentas simples e gratuitas para ajudar você a conquistar seu próximo emprego.
               </p>
             </div>
             <div>
@@ -584,8 +539,7 @@ const ResumeForm = () => {
                 href="mailto:contato@clickfacil.com.br"
                 className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 transition-colors px-4 py-2 rounded-lg text-sm font-medium"
               >
-                <Mail className="w-4 h-4" />
-                solucoesdigitais.clickfacil@gmail.com
+                <Mail className="w-4 h-4" /> solucoesdigitais.clickfacil@gmail.com
               </a>
             </div>
           </div>
