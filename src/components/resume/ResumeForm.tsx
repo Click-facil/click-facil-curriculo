@@ -22,7 +22,9 @@ import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/fi
 import type { User as FirebaseUser } from "firebase/auth";
 
 const STEPS = ["Dados Pessoais", "Formação", "Experiência", "Cursos", "Habilidades", "Finalizar"];
-const STORAGE_KEY = "clickfacil_resume_data";
+
+// Chave do localStorage inclui o UID para separar dados por usuário
+const storageKey = (uid: string | null) => `clickfacil_resume_${uid || "guest"}`;
 const TEMPLATE_KEY = "clickfacil_template";
 
 export type TemplateStyle = "modern" | "classic" | "minimal" | "creative" | "executive";
@@ -37,25 +39,15 @@ const TEMPLATES: { id: TemplateStyle; name: string; description: string; free: b
 
 const PREMIUM_TEMPLATES: TemplateStyle[] = ["modern", "creative", "executive"];
 
-/**
- * ⚠️  ADMIN: adicione aqui os UIDs do Firebase dos usuários admin.
- * Para descobrir o seu UID após logar no site:
- *   Abra o console do browser (F12) e cole:
- *   (await import('https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js')).getAuth().currentUser?.uid
- *   OU veja no Firebase Console → Authentication → Users
- */
 const ADMIN_UIDS: string[] = [
-    "VC84FK6HWsfVBCVCt43OK6xw9x43",
+       "VC84FK6HWsfVBCVCt43OK6xw9x43",
 ];
 
 const ResumeForm = () => {
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<ResumeData>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : emptyResume;
-    } catch { return emptyResume; }
-  });
+  const [uid, setUid] = useState<string | null>(null);
+
+  const [data, setData] = useState<ResumeData>(emptyResume);
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [template, setTemplate] = useState<TemplateStyle>(
@@ -71,27 +63,34 @@ const ResumeForm = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
 
+  // Quando o auth muda, carrega os dados do usuário correto
   useEffect(() => {
     const unsub = onAuthChange(async (u) => {
       setUser(u);
+      const currentUid = u?.uid || null;
+      setUid(currentUid);
+
       if (u) {
         const admin = ADMIN_UIDS.includes(u.uid);
         setIsAdmin(admin);
-        if (admin) {
-          setIsPremium(true);
-        } else {
-          const premium = await checkPremium(u.uid);
-          setIsPremium(premium);
-        }
+        setIsPremium(admin ? true : await checkPremium(u.uid));
       } else {
         setIsAdmin(false);
         setIsPremium(false);
+      }
+
+      // Carrega dados do currículo específicos do usuário
+      try {
+        const saved = localStorage.getItem(storageKey(currentUid));
+        setData(saved ? JSON.parse(saved) : emptyResume);
+      } catch {
+        setData(emptyResume);
       }
     });
     return unsub;
   }, []);
 
-  // Detecta retorno do MP (?payment=success) — fallback para cartão
+  // Detecta retorno do MP
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success" && user && !isAdmin) {
@@ -103,16 +102,16 @@ const ResumeForm = () => {
     }
   }, [user, isAdmin]);
 
-  // Autosave
+  // Autosave — separado por usuário
   useEffect(() => {
     const t = setTimeout(() => {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(storageKey(uid), JSON.stringify(data));
         setLastSaved(new Date());
       } catch { /* ignore */ }
     }, 1000);
     return () => clearTimeout(t);
-  }, [data]);
+  }, [data, uid]);
 
   useEffect(() => { localStorage.setItem(TEMPLATE_KEY, template); }, [template]);
 
@@ -125,7 +124,8 @@ const ResumeForm = () => {
     return false;
   }, [isAdmin, isPremium]);
 
-  const requireAccess = (action: string): boolean => {
+  // Só bloqueia download — visualização é sempre livre
+  const requireAccessForDownload = (action: string): boolean => {
     if (!user) {
       setPendingAction(action);
       setShowAuth(true);
@@ -170,18 +170,12 @@ const ResumeForm = () => {
     if (!pendingAction) return;
     if (pendingAction === "download-pdf") handleDownload(true);
     if (pendingAction === "download-docx") handleDocxDownload(true);
-    if (pendingAction?.startsWith("select-template:")) {
-      setTemplate(pendingAction.split(":")[1] as TemplateStyle);
-    }
     setPendingAction(null);
   };
 
+  // Selecionar template nunca bloqueia — só mostra o template
+  // O bloqueio acontece só no momento do download
   const handleSelectTemplate = (t: TemplateStyle) => {
-    if (!hasAccess(t)) {
-      setPendingAction(`select-template:${t}`);
-      if (!user) { setShowAuth(true); } else { setShowCheckout(true); }
-      return;
-    }
     setTemplate(t);
   };
 
@@ -216,7 +210,7 @@ const ResumeForm = () => {
 
   const handleDownload = async (skipCheck = false) => {
     if (!skipCheck && !hasAccess(template)) {
-      requireAccess("download-pdf");
+      requireAccessForDownload("download-pdf");
       return;
     }
     setGenerating(true);
@@ -255,7 +249,7 @@ const ResumeForm = () => {
 
   const handleDocxDownload = async (skipCheck = false) => {
     if (!skipCheck && !hasAccess(template)) {
-      requireAccess("download-docx");
+      requireAccessForDownload("download-docx");
       return;
     }
     setGenerating(true);
@@ -274,7 +268,7 @@ const ResumeForm = () => {
     if (window.confirm("Tem certeza que deseja limpar todos os dados?")) {
       setData(emptyResume);
       setStep(0);
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(storageKey(uid));
       toast.success("Dados limpos!");
     }
   };
@@ -477,6 +471,7 @@ const ResumeForm = () => {
                   );
                 })}
               </div>
+
               {!isPremium && !isAdmin && (
                 <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div>
