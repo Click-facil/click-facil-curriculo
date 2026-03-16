@@ -45,7 +45,7 @@ const PREMIUM_TEMPLATES: TemplateStyle[] = ["modern", "creative", "executive"];
  *   OU veja no Firebase Console → Authentication → Users
  */
 const ADMIN_UIDS: string[] = [
-  // "VC84FK6HWsfVBCVCt43OK6xw9x43",
+    "VC84FK6HWsfVBCVCt43OK6xw9x43",
 ];
 
 const ResumeForm = () => {
