@@ -1,49 +1,20 @@
-/**
- * CheckoutModal.tsx
- *
- * Checkout personalizado com:
- * - Aba PIX: QR code + copia e cola + polling automático
- * - Aba Cartão: formulário tokenizado pelo MercadoPago.js (sem redirecionar)
- *
- * Deps: nenhuma extra além do que já está no projeto.
- * O MercadoPago.js é carregado via script tag dinamicamente.
- */
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { X, QrCode, CreditCard, Copy, Check, Loader2, CheckCircle, AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { grantPremium } from "@/lib/firebase";
 import { toast } from "sonner";
 
-// ── Tipos do MercadoPago.js ───────────────────────────────────────────────────
 declare global {
   interface Window {
     MercadoPago: new (publicKey: string, options?: { locale: string }) => MPInstance;
   }
 }
 interface MPInstance {
-  cardForm: (options: {
-    amount: string;
-    iframe: boolean;
-    form: {
-      id: string;
-      cardNumber: { id: string; placeholder: string };
-      expirationDate: { id: string; placeholder: string };
-      securityCode: { id: string; placeholder: string };
-      cardholderName: { id: string; placeholder: string; type: string };
-      issuer: { id: string; placeholder: string };
-      installments: { id: string; placeholder: string };
-      identificationType: { id: string; placeholder: string };
-      identificationNumber: { id: string; placeholder: string };
-      cardholderEmail: { id: string; placeholder: string };
-    };
-    callbacks: {
-      onFormMounted: (err: unknown) => void;
-      onSubmit: (e: Event) => void;
-      onFetching?: (resource: string) => void;
-    };
-  }) => { getCardFormData: () => MPCardFormData; unmount: () => void };
+  cardForm: (options: object) => MPCardForm;
+}
+interface MPCardForm {
+  getCardFormData: () => MPCardFormData;
+  unmount: () => void;
 }
 interface MPCardFormData {
   token: string;
@@ -54,9 +25,7 @@ interface MPCardFormData {
   payer: { email: string; identification: { type: string; number: string } };
 }
 
-// ── Chave pública do MP (não é secreta — vai no frontend) ────────────────────
-// Substitua pela sua Public Key do Mercado Pago (começa com APP_USR- ou TEST-)
-const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
+const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY as string;
 
 interface Props {
   uid: string;
@@ -72,7 +41,7 @@ type CardStep = "idle" | "loading" | "confirmed" | "error";
 const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
   const [tab, setTab] = useState<Tab>("pix");
 
-  // ── PIX state ──────────────────────────────────────────────────────────────
+  // ── PIX ────────────────────────────────────────────────────────────────────
   const [pixStep, setPixStep] = useState<PixStep>("idle");
   const [pixCode, setPixCode] = useState("");
   const [pixQrBase64, setPixQrBase64] = useState("");
@@ -80,18 +49,55 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
   const [copied, setCopied] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // ── Card state ─────────────────────────────────────────────────────────────
+  // ── Card ───────────────────────────────────────────────────────────────────
   const [cardStep, setCardStep] = useState<CardStep>("idle");
   const [cardError, setCardError] = useState("");
-  const mpFormRef = useRef<{ getCardFormData: () => MPCardFormData; unmount: () => void } | null>(null);
+  const mpFormRef = useRef<MPCardForm | null>(null);
+  const isMountedRef = useRef(false); // controla se o form foi montado com sucesso
 
-  // Carrega o MercadoPago.js quando a aba cartão é selecionada
+  // Cleanup ao desmontar o modal
   useEffect(() => {
-    if (tab !== "card") return;
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      safeUnmountForm();
+    };
+  }, []);
 
+  // Monta/desmonta o form ao trocar de aba
+  useEffect(() => {
+    if (tab === "card") {
+      loadAndInitMP();
+    } else {
+      safeUnmountForm();
+    }
+  }, [tab]);
+
+  const safeUnmountForm = () => {
+    if (mpFormRef.current && isMountedRef.current) {
+      try {
+        mpFormRef.current.unmount();
+      } catch (e) {
+        // ignora erro de unmount quando form não estava montado
+      }
+      mpFormRef.current = null;
+      isMountedRef.current = false;
+    }
+  };
+
+  const loadAndInitMP = () => {
     const scriptId = "mp-js";
-    if (document.getElementById(scriptId)) {
+    if (document.getElementById(scriptId) && window.MercadoPago) {
       initMPForm();
+      return;
+    }
+    if (document.getElementById(scriptId)) {
+      // script já está carregando, aguarda
+      const interval = setInterval(() => {
+        if (window.MercadoPago) {
+          clearInterval(interval);
+          initMPForm();
+        }
+      }, 100);
       return;
     }
     const script = document.createElement("script");
@@ -99,41 +105,50 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
     script.src = "https://sdk.mercadopago.com/js/v2";
     script.onload = initMPForm;
     document.head.appendChild(script);
-
-    return () => {
-      mpFormRef.current?.unmount();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+  };
 
   const initMPForm = () => {
     if (!window.MercadoPago) return;
-    const mp = new window.MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
-    mpFormRef.current = mp.cardForm({
-      amount: "9.90",
-      iframe: true,
-      form: {
-        id: "mp-card-form",
-        cardNumber: { id: "mp-card-number", placeholder: "Número do cartão" },
-        expirationDate: { id: "mp-expiration-date", placeholder: "MM/AA" },
-        securityCode: { id: "mp-security-code", placeholder: "CVV" },
-        cardholderName: { id: "mp-cardholder-name", placeholder: "Nome igual no cartão", type: "text" },
-        issuer: { id: "mp-issuer", placeholder: "Banco emissor" },
-        installments: { id: "mp-installments", placeholder: "Parcelas" },
-        identificationType: { id: "mp-identification-type", placeholder: "CPF" },
-        identificationNumber: { id: "mp-identification-number", placeholder: "000.000.000-00" },
-        cardholderEmail: { id: "mp-cardholder-email", placeholder: email },
-      },
-      callbacks: {
-        onFormMounted: (err) => { if (err) console.warn("MP form error:", err); },
-        onSubmit: async (e) => {
-          e.preventDefault();
-          const data = mpFormRef.current?.getCardFormData();
-          if (!data?.token) return;
-          await processCard(data);
-        },
-      },
-    });
+    // Garante que o DOM está pronto antes de montar
+    setTimeout(() => {
+      try {
+        const mp = new window.MercadoPago(MP_PUBLIC_KEY, { locale: "pt-BR" });
+        mpFormRef.current = mp.cardForm({
+          amount: "9.90",
+          iframe: true,
+          form: {
+            id: "mp-card-form",
+            cardNumber: { id: "mp-card-number", placeholder: "Número do cartão" },
+            expirationDate: { id: "mp-expiration-date", placeholder: "MM/AA" },
+            securityCode: { id: "mp-security-code", placeholder: "CVV" },
+            cardholderName: { id: "mp-cardholder-name", placeholder: "Nome igual no cartão", type: "text" },
+            issuer: { id: "mp-issuer", placeholder: "Banco emissor" },
+            installments: { id: "mp-installments", placeholder: "Parcelas" },
+            identificationType: { id: "mp-identification-type", placeholder: "Tipo" },
+            identificationNumber: { id: "mp-identification-number", placeholder: "CPF" },
+            cardholderEmail: { id: "mp-cardholder-email", placeholder: email },
+          },
+          callbacks: {
+            onFormMounted: (err: unknown) => {
+              if (err) {
+                console.warn("MP form mount error:", err);
+                isMountedRef.current = false;
+              } else {
+                isMountedRef.current = true;
+              }
+            },
+            onSubmit: async (e: Event) => {
+              e.preventDefault();
+              const data = mpFormRef.current?.getCardFormData();
+              if (!data?.token) return;
+              await processCard(data);
+            },
+          },
+        });
+      } catch (e) {
+        console.error("MP init error:", e);
+      }
+    }, 300);
   };
 
   // ── PIX handlers ───────────────────────────────────────────────────────────
@@ -153,13 +168,12 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
         error?: string;
       };
       if (!res.ok || data.error) throw new Error(data.error || "Erro ao gerar PIX");
-
       setPixCode(data.qr_code);
       setPixQrBase64(data.qr_code_base64);
       setPixPaymentId(data.payment_id);
       setPixStep("waiting");
       startPolling(data.payment_id);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error(err);
       setPixStep("error");
     }
@@ -170,7 +184,7 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
     pollingRef.current = setInterval(async () => {
       try {
         const res = await fetch(`/api/check-payment?payment_id=${paymentId}`);
-        const data = await res.json() as { status: string; uid: string };
+        const data = await res.json() as { status: string };
         if (data.status === "approved") {
           clearInterval(pollingRef.current!);
           await grantPremium(uid);
@@ -180,10 +194,6 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
       } catch { /* continua tentando */ }
     }, 5000);
   }, [uid, onSuccess]);
-
-  useEffect(() => () => {
-    if (pollingRef.current) clearInterval(pollingRef.current);
-  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(pixCode);
@@ -211,7 +221,6 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
         }),
       });
       const data = await res.json() as { status: string; status_detail: string; error?: string };
-
       if (!res.ok || data.error) throw new Error(data.error || "Erro ao processar cartão");
 
       if (data.status === "approved") {
@@ -232,11 +241,19 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
         setCardError(msgs[data.status_detail] || "Cartão recusado. Verifique os dados ou tente outro cartão.");
         setCardStep("error");
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error(err);
       setCardError("Erro ao processar. Tente novamente.");
       setCardStep("error");
     }
+  };
+
+  const handleTabChange = (newTab: Tab) => {
+    if (newTab === tab) return;
+    if (newTab === "pix") {
+      safeUnmountForm();
+    }
+    setTab(newTab);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -271,21 +288,17 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-zinc-700">
           <button
-            onClick={() => setTab("pix")}
+            onClick={() => handleTabChange("pix")}
             className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition border-b-2 ${
-              tab === "pix"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+              tab === "pix" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
             <QrCode className="w-4 h-4" /> PIX
           </button>
           <button
-            onClick={() => setTab("card")}
+            onClick={() => handleTabChange("card")}
             className={`flex-1 py-3 text-sm font-semibold flex items-center justify-center gap-2 transition border-b-2 ${
-              tab === "card"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+              tab === "card" ? "border-blue-600 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
           >
             <CreditCard className="w-4 h-4" /> Cartão de Crédito
@@ -294,7 +307,7 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
 
         <div className="p-6">
 
-          {/* ── PIX Tab ─────────────────────────────────────────────────── */}
+          {/* PIX Tab */}
           {tab === "pix" && (
             <div className="space-y-4">
               {pixStep === "idle" && (
@@ -304,74 +317,45 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-800 dark:text-white">Pague com PIX</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      QR code gerado na hora. Aprovação em segundos.
-                    </p>
+                    <p className="text-sm text-gray-500 mt-1">QR code gerado na hora. Aprovação em segundos.</p>
                   </div>
-                  <Button
-                    className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-bold"
-                    onClick={handleGeneratePix}
-                  >
+                  <Button className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-bold" onClick={handleGeneratePix}>
                     Gerar QR Code PIX
                   </Button>
                 </div>
               )}
-
               {pixStep === "loading" && (
                 <div className="flex flex-col items-center gap-3 py-6">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
                   <p className="text-sm text-gray-500">Gerando PIX...</p>
                 </div>
               )}
-
               {pixStep === "waiting" && (
                 <div className="space-y-4">
                   <p className="text-center text-sm font-medium text-gray-700 dark:text-gray-300">
                     Escaneie o QR code ou copie o código abaixo
                   </p>
-
-                  {/* QR Code */}
                   {pixQrBase64 && (
                     <div className="flex justify-center">
-                      <img
-                        src={`data:image/png;base64,${pixQrBase64}`}
-                        alt="QR Code PIX"
-                        className="w-48 h-48 rounded-xl border border-gray-200"
-                      />
+                      <img src={`data:image/png;base64,${pixQrBase64}`} alt="QR Code PIX" className="w-48 h-48 rounded-xl border border-gray-200" />
                     </div>
                   )}
-
-                  {/* Copia e cola */}
                   <div className="bg-gray-50 dark:bg-zinc-800 rounded-xl p-3">
                     <p className="text-xs text-gray-500 mb-2 font-medium">PIX Copia e Cola:</p>
                     <div className="flex gap-2">
-                      <input
-                        readOnly
-                        value={pixCode}
-                        className="flex-1 text-xs bg-transparent text-gray-700 dark:text-gray-300 outline-none truncate"
-                      />
-                      <button
-                        onClick={handleCopy}
-                        className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition"
-                      >
+                      <input readOnly value={pixCode} className="flex-1 text-xs bg-transparent text-gray-700 dark:text-gray-300 outline-none truncate" />
+                      <button onClick={handleCopy} className="flex-shrink-0 flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition">
                         {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                         {copied ? "Copiado!" : "Copiar"}
                       </button>
                     </div>
                   </div>
-
-                  {/* Polling indicator */}
                   <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     Aguardando confirmação do pagamento...
                   </div>
-
-                  <p className="text-center text-xs text-gray-400">
-                    O acesso é liberado automaticamente após o pagamento.
-                  </p>
                 </div>
               )}
-
               {pixStep === "confirmed" && (
                 <div className="flex flex-col items-center gap-3 py-6 text-center">
                   <CheckCircle className="w-14 h-14 text-green-500" />
@@ -379,7 +363,6 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
                   <p className="text-sm text-gray-500">Liberando seu acesso premium...</p>
                 </div>
               )}
-
               {pixStep === "error" && (
                 <div className="flex flex-col items-center gap-3 py-4 text-center">
                   <AlertCircle className="w-10 h-10 text-red-500" />
@@ -390,7 +373,7 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
             </div>
           )}
 
-          {/* ── Card Tab ────────────────────────────────────────────────── */}
+          {/* Card Tab */}
           {tab === "card" && (
             <div>
               {cardStep === "confirmed" ? (
@@ -407,75 +390,37 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
                       {cardError}
                     </div>
                   )}
-
-                  {/* Campos injetados pelo MP.js como iframes — o MP cria os iframes automaticamente */}
                   <div>
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                      Número do cartão
-                    </label>
-                    <div
-                      id="mp-card-number"
-                      className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800"
-                    />
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Número do cartão</label>
+                    <div id="mp-card-number" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
                   </div>
-
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                        Validade
-                      </label>
-                      <div
-                        id="mp-expiration-date"
-                        className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800"
-                      />
+                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Validade</label>
+                      <div id="mp-expiration-date" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                        CVV
-                      </label>
-                      <div
-                        id="mp-security-code"
-                        className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800"
-                      />
+                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">CVV</label>
+                      <div id="mp-security-code" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
                     </div>
                   </div>
-
                   <div>
-                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                      Nome no cartão
-                    </label>
-                    <div
-                      id="mp-cardholder-name"
-                      className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800"
-                    />
+                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Nome no cartão</label>
+                    <div id="mp-cardholder-name" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
                   </div>
-
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                        Tipo documento
-                      </label>
-                      <div
-                        id="mp-identification-type"
-                        className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800"
-                      />
+                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Tipo documento</label>
+                      <div id="mp-identification-type" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">
-                        CPF
-                      </label>
-                      <div
-                        id="mp-identification-number"
-                        className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800"
-                      />
+                      <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">CPF</label>
+                      <div id="mp-identification-number" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
                     </div>
                   </div>
-
-                  {/* Campos ocultos necessários pelo MP */}
                   <div id="mp-issuer" style={{ display: "none" }} />
                   <div id="mp-installments" style={{ display: "none" }} />
                   <div id="mp-cardholder-email" style={{ display: "none" }} />
-
                   <Button
                     type="submit"
                     className="w-full h-11 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white font-bold mt-2"
@@ -487,7 +432,6 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
                       <><Lock className="w-4 h-4 mr-2" /> Pagar R$&nbsp;9,90</>
                     )}
                   </Button>
-
                   <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mt-2">
                     <Lock className="w-3 h-3" />
                     Dados criptografados pelo Mercado Pago
