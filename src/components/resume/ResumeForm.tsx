@@ -586,7 +586,7 @@ const ResumeForm = () => {
                 className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 transition-colors px-4 py-2 rounded-lg text-sm font-medium"
               >
                 <Mail className="w-4 h-4" />
-                contato@clickfacil.com.br
+                solucoesdigitais.clickfacil@gmail.com
               </a>
             </div>
           </div>

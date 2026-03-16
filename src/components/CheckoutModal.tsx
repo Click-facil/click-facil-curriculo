@@ -56,7 +56,7 @@ interface MPCardFormData {
 
 // ── Chave pública do MP (não é secreta — vai no frontend) ────────────────────
 // Substitua pela sua Public Key do Mercado Pago (começa com APP_USR- ou TEST-)
-const MP_PUBLIC_KEY = "APP_USR-78fa9f55-2125-45f1-85b1-9421ba17afd8";
+const MP_PUBLIC_KEY = import.meta.env.VITE_MP_PUBLIC_KEY;
 
 interface Props {
   uid: string;
