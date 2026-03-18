@@ -188,25 +188,30 @@ const ResumeForm = () => {
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
-      // Remove dark mode antes de capturar e restaura depois
-      const htmlEl = document.documentElement;
-      const wasDark = htmlEl.classList.contains("dark");
-      if (wasDark) htmlEl.classList.remove("dark");
+      // Clona o elemento fora da tela — sem piscada, sem afetar o dark mode da página
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.position = "fixed";
+      clone.style.top = "-99999px";
+      clone.style.left = "-99999px";
+      clone.style.backgroundColor = "#ffffff";
+      clone.style.colorScheme = "light";
+      clone.style.width = element.offsetWidth + "px";
+      document.body.appendChild(clone);
 
       let canvas: HTMLCanvasElement;
       try {
-        canvas = await html2canvas(element, {
+        canvas = await html2canvas(clone, {
           scale: 2,
           useCORS: true,
           allowTaint: false,
           backgroundColor: "#ffffff",
           logging: false,
           imageTimeout: 0,
-          scrollX: -window.scrollX,
-          scrollY: -window.scrollY,
+          scrollX: 0,
+          scrollY: 0,
         });
       } finally {
-        if (wasDark) htmlEl.classList.add("dark");
+        document.body.removeChild(clone);
       }
 
       const imgData = canvas.toDataURL("image/png", 1.0);
