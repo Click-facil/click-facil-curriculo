@@ -22,8 +22,6 @@ import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/fi
 import type { User as FirebaseUser } from "firebase/auth";
 
 const STEPS = ["Dados Pessoais", "Formação", "Experiência", "Cursos", "Habilidades", "Finalizar"];
-
-// Chave do localStorage inclui o UID para separar dados por usuário
 const storageKey = (uid: string | null) => `clickfacil_resume_${uid || "guest"}`;
 const TEMPLATE_KEY = "clickfacil_template";
 
@@ -40,13 +38,12 @@ const TEMPLATES: { id: TemplateStyle; name: string; description: string; free: b
 const PREMIUM_TEMPLATES: TemplateStyle[] = ["modern", "creative", "executive"];
 
 const ADMIN_UIDS: string[] = [
-       "VC84FK6HWsfVBCVCt43OK6xw9x43",
+  "VC84FK6HWsfVBCVCt43OK6xw9x43",
 ];
 
 const ResumeForm = () => {
   const [step, setStep] = useState(0);
   const [uid, setUid] = useState<string | null>(null);
-
   const [data, setData] = useState<ResumeData>(emptyResume);
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -54,8 +51,6 @@ const ResumeForm = () => {
     () => (localStorage.getItem(TEMPLATE_KEY) as TemplateStyle) || "classic"
   );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-
-  // ── Auth / premium ──────────────────────────────────────────────────────────
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -63,13 +58,11 @@ const ResumeForm = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
 
-  // Quando o auth muda, carrega os dados do usuário correto
   useEffect(() => {
     const unsub = onAuthChange(async (u) => {
       setUser(u);
       const currentUid = u?.uid || null;
       setUid(currentUid);
-
       if (u) {
         const admin = ADMIN_UIDS.includes(u.uid);
         setIsAdmin(admin);
@@ -78,8 +71,6 @@ const ResumeForm = () => {
         setIsAdmin(false);
         setIsPremium(false);
       }
-
-      // Carrega dados do currículo específicos do usuário
       try {
         const saved = localStorage.getItem(storageKey(currentUid));
         setData(saved ? JSON.parse(saved) : emptyResume);
@@ -90,7 +81,6 @@ const ResumeForm = () => {
     return unsub;
   }, []);
 
-  // Detecta retorno do MP
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("payment") === "success" && user && !isAdmin) {
@@ -102,7 +92,6 @@ const ResumeForm = () => {
     }
   }, [user, isAdmin]);
 
-  // Autosave — separado por usuário
   useEffect(() => {
     const t = setTimeout(() => {
       try {
@@ -115,8 +104,6 @@ const ResumeForm = () => {
 
   useEffect(() => { localStorage.setItem(TEMPLATE_KEY, template); }, [template]);
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-
   const hasAccess = useCallback((t: TemplateStyle) => {
     if (!PREMIUM_TEMPLATES.includes(t)) return true;
     if (isAdmin) return true;
@@ -124,18 +111,9 @@ const ResumeForm = () => {
     return false;
   }, [isAdmin, isPremium]);
 
-  // Só bloqueia download — visualização é sempre livre
   const requireAccessForDownload = (action: string): boolean => {
-    if (!user) {
-      setPendingAction(action);
-      setShowAuth(true);
-      return false;
-    }
-    if (!isPremium && !isAdmin) {
-      setPendingAction(action);
-      setShowCheckout(true);
-      return false;
-    }
+    if (!user) { setPendingAction(action); setShowAuth(true); return false; }
+    if (!isPremium && !isAdmin) { setPendingAction(action); setShowCheckout(true); return false; }
     return true;
   };
 
@@ -145,18 +123,10 @@ const ResumeForm = () => {
     if (!currentUser) return;
     const admin = ADMIN_UIDS.includes(currentUser.uid);
     setIsAdmin(admin);
-    if (admin) {
-      setIsPremium(true);
-      executePendingAction();
-      return;
-    }
+    if (admin) { setIsPremium(true); executePendingAction(); return; }
     const premium = await checkPremium(currentUser.uid);
     setIsPremium(premium);
-    if (!premium) {
-      setShowCheckout(true);
-    } else {
-      executePendingAction();
-    }
+    if (!premium) { setShowCheckout(true); } else { executePendingAction(); }
   };
 
   const handleCheckoutSuccess = () => {
@@ -173,11 +143,7 @@ const ResumeForm = () => {
     setPendingAction(null);
   };
 
-  // Selecionar template nunca bloqueia — só mostra o template
-  // O bloqueio acontece só no momento do download
-  const handleSelectTemplate = (t: TemplateStyle) => {
-    setTemplate(t);
-  };
+  const handleSelectTemplate = (t: TemplateStyle) => setTemplate(t);
 
   const getProgress = useCallback(() => {
     let filled = 0;
@@ -206,8 +172,6 @@ const ResumeForm = () => {
   };
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
-  // ── Downloads ────────────────────────────────────────────────────────────────
-
   const handleDownload = async (skipCheck = false) => {
     if (!skipCheck && !hasAccess(template)) {
       requireAccessForDownload("download-pdf");
@@ -217,24 +181,55 @@ const ResumeForm = () => {
     try {
       const element = document.getElementById("resume-preview");
       if (!element) { toast.error("Prévia não encontrada."); return; }
+
       await document.fonts.ready;
       await new Promise((r) => setTimeout(r, 300));
+
       const domtoimage = (await import("dom-to-image-more")).default;
       const { jsPDF } = await import("jspdf");
-      const scale = 3;
+
+      const w = element.offsetWidth;
+      const h = element.offsetHeight;
+      const scale = 2;
+
+      // Clona o elemento, força fundo branco e remove dark mode antes de capturar
       const imgData = await domtoimage.toPng(element, {
-        width: element.offsetWidth * scale,
-        height: element.offsetHeight * scale,
+        width: w * scale,
+        height: h * scale,
+        bgcolor: "#ffffff",
         style: {
           transform: `scale(${scale})`,
           transformOrigin: "top left",
-          width: `${element.offsetWidth}px`,
-          height: `${element.offsetHeight}px`,
+          width: `${w}px`,
+          height: `${h}px`,
+          backgroundColor: "#ffffff",
+          colorScheme: "light",
+        },
+        onclone: (clonedDoc: Document) => {
+          // Remove classe dark do html clonado para evitar dark mode no PDF
+          clonedDoc.documentElement.classList.remove("dark");
+          clonedDoc.documentElement.setAttribute("data-theme", "light");
+          // Garante fundo branco em todos os elementos do currículo
+          const preview = clonedDoc.getElementById("resume-preview");
+          if (preview) {
+            preview.style.backgroundColor = "#ffffff";
+            // Remove qualquer filtro ou efeito de dark mode
+            const allElements = preview.querySelectorAll<HTMLElement>("*");
+            allElements.forEach((el) => {
+              const computed = window.getComputedStyle(el);
+              // Se o elemento tiver fundo preto/escuro vindo do dark mode (não intencional)
+              const bg = el.style.backgroundColor;
+              if (!bg || bg === "") {
+                el.style.backgroundColor = "transparent";
+              }
+            });
+          }
         },
       });
+
       const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       const pdfW = 210;
-      const pdfH = (element.offsetHeight * pdfW) / element.offsetWidth;
+      const pdfH = (h * pdfW) / w;
       pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
       const name = data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu";
       pdf.save(`curriculo-${name}.pdf`);
@@ -312,12 +307,8 @@ const ResumeForm = () => {
               )}
               {user ? (
                 <div className="flex items-center gap-2">
-                  {isAdmin && (
-                    <span className="text-xs bg-red-400 text-white font-bold px-2 py-0.5 rounded-full">ADMIN</span>
-                  )}
-                  {isPremium && !isAdmin && (
-                    <span className="text-xs bg-amber-400 text-amber-900 font-bold px-2 py-0.5 rounded-full">PREMIUM</span>
-                  )}
+                  {isAdmin && <span className="text-xs bg-red-400 text-white font-bold px-2 py-0.5 rounded-full">ADMIN</span>}
+                  {isPremium && !isAdmin && <span className="text-xs bg-amber-400 text-amber-900 font-bold px-2 py-0.5 rounded-full">PREMIUM</span>}
                   <span className="text-xs opacity-70 hidden sm:block">{user.displayName || user.email}</span>
                   <button onClick={() => logout()} title="Sair" className="opacity-60 hover:opacity-100 transition">
                     <LogOut className="w-4 h-4" />
@@ -471,7 +462,6 @@ const ResumeForm = () => {
                   );
                 })}
               </div>
-
               {!isPremium && !isAdmin && (
                 <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div>
@@ -531,7 +521,7 @@ const ResumeForm = () => {
               </h3>
               <p className="text-sm opacity-75 mb-3">Sugestões, dúvidas ou problemas?</p>
               <a
-                href="mailto:contato@clickfacil.com.br"
+                href="mailto:solucoesdigitais.clickfacil@gmail.com"
                 className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 transition-colors px-4 py-2 rounded-lg text-sm font-medium"
               >
                 <Mail className="w-4 h-4" /> solucoesdigitais.clickfacil@gmail.com
