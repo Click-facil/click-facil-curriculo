@@ -206,23 +206,15 @@ const ResumeForm = () => {
           colorScheme: "light",
         },
         onclone: (clonedDoc: Document) => {
-          // Remove classe dark do html clonado para evitar dark mode no PDF
-          clonedDoc.documentElement.classList.remove("dark");
-          clonedDoc.documentElement.setAttribute("data-theme", "light");
-          // Garante fundo branco em todos os elementos do currículo
+          // Remove dark mode do documento clonado
+          if (clonedDoc.documentElement) {
+            clonedDoc.documentElement.classList.remove("dark");
+            clonedDoc.documentElement.setAttribute("data-theme", "light");
+            clonedDoc.documentElement.style.colorScheme = "light";
+          }
           const preview = clonedDoc.getElementById("resume-preview");
           if (preview) {
             preview.style.backgroundColor = "#ffffff";
-            // Remove qualquer filtro ou efeito de dark mode
-            const allElements = preview.querySelectorAll<HTMLElement>("*");
-            allElements.forEach((el) => {
-              const computed = window.getComputedStyle(el);
-              // Se o elemento tiver fundo preto/escuro vindo do dark mode (não intencional)
-              const bg = el.style.backgroundColor;
-              if (!bg || bg === "") {
-                el.style.backgroundColor = "transparent";
-              }
-            });
           }
         },
       });
