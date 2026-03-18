@@ -185,43 +185,34 @@ const ResumeForm = () => {
       await document.fonts.ready;
       await new Promise((r) => setTimeout(r, 300));
 
-      const domtoimage = (await import("dom-to-image-more")).default;
+      const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
-      const w = element.offsetWidth;
-      const h = element.offsetHeight;
-      const scale = 2;
+      // Remove dark mode antes de capturar e restaura depois
+      const htmlEl = document.documentElement;
+      const wasDark = htmlEl.classList.contains("dark");
+      if (wasDark) htmlEl.classList.remove("dark");
 
-      // Clona o elemento, força fundo branco e remove dark mode antes de capturar
-      const imgData = await domtoimage.toPng(element, {
-        width: w * scale,
-        height: h * scale,
-        bgcolor: "#ffffff",
-        style: {
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-          width: `${w}px`,
-          height: `${h}px`,
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
           backgroundColor: "#ffffff",
-          colorScheme: "light",
-        },
-        onclone: (clonedDoc: Document) => {
-          // Remove dark mode do documento clonado
-          if (clonedDoc.documentElement) {
-            clonedDoc.documentElement.classList.remove("dark");
-            clonedDoc.documentElement.setAttribute("data-theme", "light");
-            clonedDoc.documentElement.style.colorScheme = "light";
-          }
-          const preview = clonedDoc.getElementById("resume-preview");
-          if (preview) {
-            preview.style.backgroundColor = "#ffffff";
-          }
-        },
-      });
+          logging: false,
+          imageTimeout: 0,
+          scrollX: -window.scrollX,
+          scrollY: -window.scrollY,
+        });
+      } finally {
+        if (wasDark) htmlEl.classList.add("dark");
+      }
 
+      const imgData = canvas.toDataURL("image/png", 1.0);
       const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       const pdfW = 210;
-      const pdfH = (h * pdfW) / w;
+      const pdfH = (canvas.height * pdfW) / canvas.width;
       pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
       const name = data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu";
       pdf.save(`curriculo-${name}.pdf`);
