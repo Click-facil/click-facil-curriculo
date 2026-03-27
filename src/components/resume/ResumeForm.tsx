@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, ArrowRight, Download, Eye, EyeOff, FileText,
@@ -520,6 +521,10 @@ const ResumeForm = () => {
         <div className="border-t border-white/10">
           <div className="container max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs opacity-50">
             <span>© {new Date().getFullYear()} Click Fácil. Todos os direitos reservados.</span>
+            <div className="flex gap-4">
+              <Link to="/privacidade" className="hover:opacity-80 transition-opacity">Política de Privacidade</Link>
+              <Link to="/termos" className="hover:opacity-80 transition-opacity">Termos de Uso</Link>
+            </div>
             <span>Feito com ❤️ para quem busca uma oportunidade</span>
           </div>
         </div>
