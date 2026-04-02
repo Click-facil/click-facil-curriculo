@@ -26,7 +26,7 @@ const STEPS = ["Dados Pessoais", "Formação", "Experiência", "Cursos", "Habili
 const storageKey = (uid: string | null) => `clickfacil_resume_${uid || "guest"}`;
 const TEMPLATE_KEY = "clickfacil_template";
 
-export type TemplateStyle = "modern" | "classic" | "minimal" | "creative" | "executive";
+export type TemplateStyle = "modern" | "classic" | "minimal" | "creative" | "executive" | "tech" | "academic" | "elegant";
 
 const TEMPLATES: { id: TemplateStyle; name: string; description: string; free: boolean }[] = [
   { id: "classic",   name: "Clássico",    description: "Coluna única, serifado e formal", free: true  },
@@ -34,9 +34,12 @@ const TEMPLATES: { id: TemplateStyle; name: string; description: string; free: b
   { id: "modern",    name: "Moderno",     description: "Sidebar lateral com ícones",      free: false },
   { id: "creative",  name: "Criativo",    description: "Colorido e ousado",               free: false },
   { id: "executive", name: "Executivo",   description: "Elegante e sofisticado",          free: false },
+  { id: "tech",      name: "Tech",        description: "Dark mode estilo terminal",       free: false },
+  { id: "academic",  name: "Acadêmico",   description: "Formal, ideal para pesquisa",    free: false },
+  { id: "elegant",   name: "Elegante",    description: "Rosê, sofisticado e feminino",   free: false },
 ];
 
-const PREMIUM_TEMPLATES: TemplateStyle[] = ["modern", "creative", "executive"];
+const PREMIUM_TEMPLATES: TemplateStyle[] = ["modern", "creative", "executive", "tech", "academic", "elegant"];
 
 const ADMIN_UIDS: string[] = [
   "VC84FK6HWsfVBCVCt43OK6xw9x43",
@@ -454,7 +457,7 @@ const ResumeForm = () => {
               {!isPremium && !isAdmin && (
                 <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-amber-900 text-sm">✨ Desbloqueie os 3 templates premium por apenas R$&nbsp;9,90</p>
+                    <p className="font-semibold text-amber-900 text-sm">✨ Desbloqueie os 6 templates premium por apenas R$&nbsp;9,90</p>
                     <p className="text-xs text-amber-700">Pagamento único · acesso vitalício · PIX ou cartão</p>
                   </div>
                   <Button
