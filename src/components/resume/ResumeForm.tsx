@@ -18,7 +18,7 @@ import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
 import CheckoutModal from "./CheckoutModal";
 import { toast } from "sonner";
-import { exportToDocx } from "@/lib/docx-export";
+// import { exportToDocx } from "@/lib/docx-export";
 import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
 
@@ -143,7 +143,7 @@ const ResumeForm = () => {
   const executePendingAction = () => {
     if (!pendingAction) return;
     if (pendingAction === "download-pdf") handleDownload(true);
-    if (pendingAction === "download-docx") handleDocxDownload(true);
+    // if (pendingAction === "download-docx") handleDocxDownload(true);
     setPendingAction(null);
   };
 
@@ -234,22 +234,22 @@ const ResumeForm = () => {
     }
   };
 
-  const handleDocxDownload = async (skipCheck = false) => {
-    if (!skipCheck && !hasAccess(template)) {
-      requireAccessForDownload("download-docx");
-      return;
-    }
-    setGenerating(true);
-    try {
-      await exportToDocx(data, template);
-      toast.success("Currículo DOCX baixado!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao gerar DOCX.");
-    } finally {
-      setGenerating(false);
-    }
-  };
+  // const handleDocxDownload = async (skipCheck = false) => {
+  //   if (!skipCheck && !hasAccess(template)) {
+  //     requireAccessForDownload("download-docx");
+  //     return;
+  //   }
+  //   setGenerating(true);
+  //   try {
+  //     await exportToDocx(data, template);
+  //     toast.success("Currículo DOCX baixado!");
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error("Erro ao gerar DOCX.");
+  //   } finally {
+  //     setGenerating(false);
+  //   }
+  // };
 
   const handleClearData = () => {
     if (window.confirm("Tem certeza que deseja limpar todos os dados?")) {
@@ -402,17 +402,17 @@ const ResumeForm = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold font-display text-foreground">Seu Currículo está Pronto! 🎉</h2>
-                <p className="text-muted-foreground">Revise e faça o download em PDF ou DOCX</p>
+                <p className="text-muted-foreground">Revise e faça o download em PDF</p>
               </div>
               <div className="flex gap-2 flex-wrap justify-center">
                 <Button variant="outline" onClick={prev}>
                   <ArrowLeft className="w-4 h-4 mr-2" /> Editar
                 </Button>
-                <Button variant="outline" onClick={() => handleDocxDownload()} disabled={generating}>
+                {/* <Button variant="outline" onClick={() => handleDocxDownload()} disabled={generating}>
                   <FileText className="w-4 h-4 mr-2" />
                   {!hasAccess(template) && <Lock className="w-3 h-3 mr-1 opacity-60" />}
                   DOCX
-                </Button>
+                </Button> */}
                 <Button onClick={() => handleDownload()} disabled={generating}>
                   <Download className="w-4 h-4 mr-2" />
                   {!hasAccess(template) && <Lock className="w-3 h-3 mr-1 opacity-60" />}
@@ -502,7 +502,7 @@ const ResumeForm = () => {
               <ul className="space-y-1 text-sm opacity-75">
                 <li>✅ Templates Clássico e Minimalista grátis</li>
                 <li>✅ Sem cadastro obrigatório</li>
-                <li>✅ Download em PDF e DOCX</li>
+                <li>✅ Download em PDF</li>
                 <li>⭐ Templates premium por R$9,90 únicos</li>
                 <li>⭐ Currículo salvo na nuvem com conta</li>
               </ul>
