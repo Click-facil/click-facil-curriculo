@@ -527,7 +527,7 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
     <div id="resume-preview" className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Georgia', serif", fontSize: "12px", lineHeight: "1.7", minHeight: "1123px" }}>
       {/* Faixa rosê no topo */}
-      <div style={{ height: "8px", backgroundColor: rose }} />
+      <div style={{ height: "8px", backgroundColor: rose, minHeight: "8px" }} />
 
       {/* Header */}
       <div style={{ padding: "36px 48px 24px", textAlign: "center", backgroundColor: light }}>
@@ -538,9 +538,9 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
           {personalInfo.fullName || "SEU NOME"}
         </h1>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "4px", marginBottom: "12px" }}>
-          <div style={{ width: "32px", height: "1px", backgroundColor: rose }} />
-          <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: rose }} />
-          <div style={{ width: "32px", height: "1px", backgroundColor: rose }} />
+          <div style={{ width: "32px", height: "2px", backgroundColor: rose, minHeight: "2px" }} />
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: rose, minWidth: "6px", minHeight: "6px" }} />
+          <div style={{ width: "32px", height: "2px", backgroundColor: rose, minHeight: "2px" }} />
         </div>
         <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "20px", fontSize: "10px", color: mid }}>
           {personalInfo.email && <span>✉ {personalInfo.email}</span>}
@@ -559,7 +559,7 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
           {experience.length > 0 && (
             <div style={{ marginBottom: "24px" }}>
               <h2 style={{ fontSize: "12px", fontWeight: "bold", color: rose, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "4px" }}>Experiência</h2>
-              <div style={{ height: "1px", backgroundColor: rose, opacity: 0.3, marginBottom: "14px" }} />
+              <div style={{ height: "2px", backgroundColor: rose, opacity: 0.3, marginBottom: "14px", minHeight: "2px" }} />
               {experience.map(exp => (
                 <div key={exp.id} style={{ marginBottom: "14px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "4px" }}>
@@ -581,7 +581,7 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
           {education.length > 0 && (
             <div style={{ marginBottom: "24px" }}>
               <h2 style={{ fontSize: "12px", fontWeight: "bold", color: rose, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "4px" }}>Formação</h2>
-              <div style={{ height: "1px", backgroundColor: rose, opacity: 0.3, marginBottom: "14px" }} />
+              <div style={{ height: "2px", backgroundColor: rose, opacity: 0.3, marginBottom: "14px", minHeight: "2px" }} />
               {education.map(edu => (
                 <div key={edu.id} style={{ marginBottom: "10px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "4px" }}>
@@ -597,7 +597,7 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
           {courses.length > 0 && (
             <div>
               <h2 style={{ fontSize: "12px", fontWeight: "bold", color: rose, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "4px" }}>Cursos</h2>
-              <div style={{ height: "1px", backgroundColor: rose, opacity: 0.3, marginBottom: "14px" }} />
+              <div style={{ height: "2px", backgroundColor: rose, opacity: 0.3, marginBottom: "14px", minHeight: "2px" }} />
               {courses.map(c => (
                 <div key={c.id} style={{ fontSize: "11px", marginBottom: "5px", display: "flex", justifyContent: "space-between" }}>
                   <span><strong style={{ color: dark }}>{c.name}</strong> <span style={{ color: mid }}>— {c.institution}</span></span>

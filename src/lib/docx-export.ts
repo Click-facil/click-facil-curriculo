@@ -498,21 +498,18 @@ function buildExecutive(data: ResumeData): Document {
 
   return new Document({
     sections: [{
-      properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 0, bottom: 1440, left: 0, right: 0 } } },
+      properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 0, bottom: 1440, left: 1440, right: 1440 } } },
       children: [
         // Header escuro
         new Table({
-          width: { size: 11906, type: WidthType.DXA },
+          width: { size: 100, type: WidthType.PERCENTAGE },
           columnWidths: [11906],
-          rows: [new TableRow({ children: [new TableCell({ borders: noBorders, shading: { fill: dark, type: ShadingType.SOLID }, margins: { top: 400, bottom: 200, left: 1440, right: 1440 }, children: headerChildren })] })],
+          rows: [new TableRow({ children: [new TableCell({ borders: noBorders, shading: { fill: dark, type: ShadingType.SOLID }, margins: { top: 400, bottom: 300, left: 400, right: 400 }, children: headerChildren })] })],
         }),
         // Linha dourada
-        new Paragraph({ children: [new TextRun("")], border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: gold, space: 0 } } }),
-        // Body com margem
-        ...bodyChildren.map(p => {
-          // adiciona margem lateral ao body
-          return p;
-        }),
+        new Paragraph({ children: [new TextRun("")], border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: gold, space: 0 } }, spacing: { after: 200 } }),
+        // Body
+        ...bodyChildren,
       ],
     }],
   });
@@ -556,8 +553,7 @@ function buildTech(data: ResumeData): Document {
     experience.forEach(exp => {
       children.push(new Paragraph({ children: [new TextRun({ text: exp.position, bold: true, size: 22, color: "ffffff", font: "Courier New" }), new TextRun({ text: `   ${fmtDate(exp.startDate)} → ${exp.current ? "now" : fmtDate(exp.endDate)}`, size: 18, color: neon, font: "Courier New" })], shading: { fill: card, type: ShadingType.SOLID } }));
       children.push(new Paragraph({ children: [new TextRun({ text: `${exp.company}${exp.city ? ` · ${exp.city}` : ""}`, size: 18, color: dim, font: "Courier New" })], shading: { fill: card, type: ShadingType.SOLID }, spacing: { after: 60 } }));
-      if (exp.description) exp.description.split("
-").filter(Boolean).forEach(line => children.push(new Paragraph({ children: [new TextRun({ text: `- ${line.replace(/^[-•]\s*/, "")}`, size: 18, color: "c9d1d9", font: "Courier New" })], shading: { fill: card, type: ShadingType.SOLID }, spacing: { after: 30 } })));
+      if (exp.description) exp.description.split("\n").filter(Boolean).forEach(line => children.push(new Paragraph({ children: [new TextRun({ text: `- ${line.replace(/^[-•]\s*/, "")}`, size: 18, color: "c9d1d9", font: "Courier New" })], shading: { fill: card, type: ShadingType.SOLID }, spacing: { after: 30 } })));
       children.push(emptyPara());
     });
   }
@@ -608,18 +604,20 @@ function buildAcademic(data: ResumeData): Document {
 
   const children: Paragraph[] = [
     new Paragraph({
-      children: [new TextRun({ text: personalInfo.fullName || "SEU NOME", bold: true, size: 44, color: primary, font: "Arial" })],
+      children: [new TextRun({ text: personalInfo.fullName || "SEU NOME", bold: true, size: 44, color: "FFFFFF", font: "Arial" })],
       alignment: AlignmentType.CENTER,
       shading: { fill: primary, type: ShadingType.SOLID },
       spacing: { before: 200, after: 80 },
     }),
     new Paragraph({
-      children: [new TextRun({ text: [personalInfo.email, personalInfo.phone, [personalInfo.city, personalInfo.state].filter(Boolean).join(", "), personalInfo.linkedin].filter(Boolean).join("   ·   "), size: 18, color: "cccccc", font: "Arial" })],
+      children: [new TextRun({ text: [personalInfo.email, personalInfo.phone, [personalInfo.city, personalInfo.state].filter(Boolean).join(", "), personalInfo.linkedin].filter(Boolean).join("   ·   "), size: 18, color: "CCCCCC", font: "Arial" })],
       alignment: AlignmentType.CENTER,
       shading: { fill: primary, type: ShadingType.SOLID },
       spacing: { after: 200 },
     }),
-    ...(personalInfo.objective ? [new Paragraph({ children: [new TextRun({ text: personalInfo.objective, size: 20, italics: true, color: "cccccc", font: "Georgia" })], alignment: AlignmentType.CENTER, shading: { fill: primary, type: ShadingType.SOLID }, spacing: { after: 240 } })] : []),
+    ...(personalInfo.objective ? [new Paragraph({ children: [new TextRun({ text: personalInfo.objective, size: 20, italics: true, color: "CCCCCC", font: "Georgia" })], alignment: AlignmentType.CENTER, shading: { fill: primary, type: ShadingType.SOLID }, spacing: { after: 240 } })] : []),
+    // Faixa decorativa
+    new Paragraph({ children: [new TextRun("")], border: { bottom: { style: BorderStyle.SINGLE, size: 16, color: accent, space: 0 } }, spacing: { after: 200 } }),
   ];
 
   if (experience.length > 0) {
@@ -627,8 +625,7 @@ function buildAcademic(data: ResumeData): Document {
     experience.forEach(exp => {
       children.push(new Paragraph({ children: [new TextRun({ text: exp.position, bold: true, size: 22, color: primary, font: "Georgia" }), new TextRun({ text: `   ${fmtDate(exp.startDate)} – ${exp.current ? "presente" : fmtDate(exp.endDate)}`, size: 18, italics: true, color: "666666", font: "Georgia" })] }));
       children.push(new Paragraph({ children: [new TextRun({ text: `${exp.company}${exp.city ? `, ${exp.city}` : ""}`, size: 20, italics: true, color: "444444", font: "Georgia" })], spacing: { after: 60 } }));
-      if (exp.description) exp.description.split("
-").filter(Boolean).forEach(line => children.push(new Paragraph({ children: [new TextRun({ text: `• ${line.replace(/^[-•]\s*/, "")}`, size: 20, color: "333333", font: "Georgia" })], spacing: { after: 30 } })));
+      if (exp.description) exp.description.split("\n").filter(Boolean).forEach(line => children.push(new Paragraph({ children: [new TextRun({ text: `• ${line.replace(/^[-•]\s*/, "")}`, size: 20, color: "333333", font: "Georgia" })], spacing: { after: 30 } })));
       children.push(emptyPara());
     });
   }
@@ -701,8 +698,7 @@ function buildElegant(data: ResumeData): Document {
     experience.forEach(exp => {
       children.push(new Paragraph({ children: [new TextRun({ text: exp.position, bold: true, size: 22, color: dark, font: "Georgia" }), new TextRun({ text: `   ${fmtDate(exp.startDate)} – ${exp.current ? "atual" : fmtDate(exp.endDate)}`, size: 18, italics: true, color: mid, font: "Georgia" })] }));
       children.push(new Paragraph({ children: [new TextRun({ text: `${exp.company}${exp.city ? ` · ${exp.city}` : ""}`, size: 20, color: rose, font: "Georgia" })], spacing: { after: 60 } }));
-      if (exp.description) exp.description.split("
-").filter(Boolean).forEach(line => children.push(new Paragraph({ children: [new TextRun({ text: `◦ ${line.replace(/^[-•]\s*/, "")}`, size: 20, color: "444444", font: "Georgia" })], spacing: { after: 30 } })));
+      if (exp.description) exp.description.split("\n").filter(Boolean).forEach(line => children.push(new Paragraph({ children: [new TextRun({ text: `◦ ${line.replace(/^[-•]\s*/, "")}`, size: 20, color: "444444", font: "Georgia" })], spacing: { after: 30 } })));
       children.push(emptyPara());
     });
   }
