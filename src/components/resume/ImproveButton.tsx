@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sparkles, Loader2, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTextImprover } from "@/hooks/useTextImprover";
@@ -11,22 +11,39 @@ interface ImproveButtonProps {
   tipo?: TipoMelhoria;
 }
 
-const LIMITE_TENTATIVAS = 3;
+const COOLDOWN_SEGUNDOS = 5;
 
 export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveButtonProps) {
   const { improveText, loading, error } = useTextImprover();
   const [preview, setPreview] = useState<string | null>(null);
-  const [tentativas, setTentativas] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const jaGerou = preview !== null || cooldown > 0;
 
-  const esgotado = tentativas >= LIMITE_TENTATIVAS;
-  const desabilitado = loading || !value?.trim() || value.trim().length < 10 || esgotado;
+  function iniciarCooldown() {
+    setCooldown(COOLDOWN_SEGUNDOS);
+    intervalRef.current = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) {
+          clearInterval(intervalRef.current!);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   async function handleClick() {
-    if (esgotado) return;
     const resultado = await improveText(value, tipo);
     if (resultado) {
       setPreview(resultado);
-      setTentativas((t) => t + 1);
+      iniciarCooldown();
     }
   }
 
@@ -41,20 +58,16 @@ export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveBut
     setPreview(null);
   }
 
-  const tentativasRestantes = LIMITE_TENTATIVAS - tentativas;
+  const emCooldown = cooldown > 0;
+  const desabilitado = loading || emCooldown || !value?.trim() || value.trim().length < 10;
 
   return (
     <div className="flex flex-col gap-2 mt-1">
       {/* Botão principal */}
       <div className="flex items-center justify-end gap-2">
-        {tentativas > 0 && !esgotado && (
-          <span className="text-xs text-muted-foreground">
-            {tentativasRestantes} {tentativasRestantes === 1 ? "tentativa restante" : "tentativas restantes"}
-          </span>
-        )}
-        {esgotado && (
-          <span className="text-xs text-muted-foreground">
-            Limite atingido para esta sessão
+        {emCooldown && (
+          <span className="text-xs text-muted-foreground tabular-nums">
+            Aguarde {cooldown}s...
           </span>
         )}
         <Button
@@ -70,7 +83,7 @@ export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveBut
           ) : (
             <Sparkles className="w-3.5 h-3.5" />
           )}
-          {loading ? "Melhorando..." : tentativas === 0 ? "Melhorar com IA" : "Nova sugestão"}
+          {loading ? "Melhorando..." : jaGerou ? "Nova sugestão" : "Melhorar com IA"}
         </Button>
       </div>
 
@@ -88,17 +101,15 @@ export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveBut
             <p className="text-xs font-semibold text-primary uppercase tracking-wide flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> Sugestão da IA
             </p>
-            {!esgotado && (
-              <button
-                type="button"
-                onClick={handleClick}
-                disabled={loading}
-                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className="w-3 h-3" />
-                Gerar nova sugestão
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleClick}
+              disabled={desabilitado}
+              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className="w-3 h-3" />
+              {emCooldown ? `Nova em ${cooldown}s` : "Gerar nova"}
+            </button>
           </div>
           <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
             {preview}
