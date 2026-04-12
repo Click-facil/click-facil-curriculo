@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Loader2, Check, X } from "lucide-react";
+import { Sparkles, Loader2, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTextImprover } from "@/hooks/useTextImprover";
 
@@ -11,13 +11,23 @@ interface ImproveButtonProps {
   tipo?: TipoMelhoria;
 }
 
+const LIMITE_TENTATIVAS = 3;
+
 export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveButtonProps) {
   const { improveText, loading, error } = useTextImprover();
   const [preview, setPreview] = useState<string | null>(null);
+  const [tentativas, setTentativas] = useState(0);
+
+  const esgotado = tentativas >= LIMITE_TENTATIVAS;
+  const desabilitado = loading || !value?.trim() || value.trim().length < 10 || esgotado;
 
   async function handleClick() {
+    if (esgotado) return;
     const resultado = await improveText(value, tipo);
-    if (resultado) setPreview(resultado);
+    if (resultado) {
+      setPreview(resultado);
+      setTentativas((t) => t + 1);
+    }
   }
 
   function handleAccept() {
@@ -31,24 +41,36 @@ export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveBut
     setPreview(null);
   }
 
+  const tentativasRestantes = LIMITE_TENTATIVAS - tentativas;
+
   return (
     <div className="flex flex-col gap-2 mt-1">
       {/* Botão principal */}
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-2">
+        {tentativas > 0 && !esgotado && (
+          <span className="text-xs text-muted-foreground">
+            {tentativasRestantes} {tentativasRestantes === 1 ? "tentativa restante" : "tentativas restantes"}
+          </span>
+        )}
+        {esgotado && (
+          <span className="text-xs text-muted-foreground">
+            Limite atingido para esta sessão
+          </span>
+        )}
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={handleClick}
-          disabled={loading || !value?.trim() || value.trim().length < 10}
-          className="gap-1.5 text-primary border-primary/40 hover:border-primary hover:bg-primary/5 text-xs"
+          disabled={desabilitado}
+          className="gap-1.5 text-primary border-primary/40 hover:border-primary hover:bg-primary/5 text-xs disabled:opacity-50"
         >
           {loading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
             <Sparkles className="w-3.5 h-3.5" />
           )}
-          {loading ? "Melhorando..." : "Melhorar com IA"}
+          {loading ? "Melhorando..." : tentativas === 0 ? "Melhorar com IA" : "Nova sugestão"}
         </Button>
       </div>
 
@@ -62,9 +84,22 @@ export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveBut
       {/* Preview da sugestão */}
       {preview && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-          <p className="text-xs font-semibold text-primary uppercase tracking-wide flex items-center gap-1">
-            <Sparkles className="w-3 h-3" /> Sugestão da IA
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wide flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> Sugestão da IA
+            </p>
+            {!esgotado && (
+              <button
+                type="button"
+                onClick={handleClick}
+                disabled={loading}
+                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Gerar nova sugestão
+              </button>
+            )}
+          </div>
           <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
             {preview}
           </p>
