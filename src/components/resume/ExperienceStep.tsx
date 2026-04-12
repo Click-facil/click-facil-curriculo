@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
 import { Experience } from "@/types/resume";
 import FieldTooltip from "./FieldTooltip";
+import { ImproveButton } from "./ImproveButton";
 
 interface Props {
   data: Experience[];
@@ -79,6 +80,11 @@ const ExperienceStep = ({ data, onChange }: Props) => {
                 value={exp.description}
                 onChange={(e) => update(exp.id, "description", e.target.value)}
                 rows={3}
+              />
+              <ImproveButton
+                value={exp.description}
+                onChange={(novoTexto) => update(exp.id, "description", novoTexto)}
+                tipo="experiencia"
               />
             </div>
           </div>

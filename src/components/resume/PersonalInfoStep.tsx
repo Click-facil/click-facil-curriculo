@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import PhotoUpload from "./PhotoUpload";
 import FieldTooltip from "./FieldTooltip";
+import { ImproveButton } from "./ImproveButton";
 import { PersonalInfo } from "@/types/resume";
 import { formatPhone } from "@/lib/phone-mask";
 
@@ -99,6 +100,11 @@ const PersonalInfoStep = ({ data, onChange }: Props) => {
             value={data.objective}
             onChange={(e) => update("objective", e.target.value)}
             rows={3}
+          />
+          <ImproveButton
+            value={data.objective}
+            onChange={(novoTexto) => update("objective", novoTexto)}
+            tipo="objetivo"
           />
         </div>
       </div>
