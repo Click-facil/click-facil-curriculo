@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, ArrowRight, Download, Eye, EyeOff, FileText,
-  Save, Palette, Mail, Info, Lock, LogOut, User,
+  Save, Palette, Mail, Info, Lock, LogOut, User, Check,
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { ResumeData, emptyResume } from "@/types/resume";
@@ -17,6 +17,7 @@ import ResumePreview from "./ResumePreview";
 import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
 import CheckoutModal from "./CheckoutModal";
+import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import { toast } from "sonner";
 // import { exportToDocx } from "@/lib/docx-export";
 import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
@@ -399,20 +400,17 @@ const ResumeForm = () => {
           </div>
         ) : (
           <div className="space-y-6">
+
+            {/* Cabeçalho */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-bold font-display text-foreground">Seu Currículo está Pronto! 🎉</h2>
-                <p className="text-muted-foreground">Revise e faça o download em PDF</p>
+                <p className="text-muted-foreground">Revise, escolha o template e faça o download</p>
               </div>
               <div className="flex gap-2 flex-wrap justify-center">
                 <Button variant="outline" onClick={prev}>
                   <ArrowLeft className="w-4 h-4 mr-2" /> Editar
                 </Button>
-                {/* <Button variant="outline" onClick={() => handleDocxDownload()} disabled={generating}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  {!hasAccess(template) && <Lock className="w-3 h-3 mr-1 opacity-60" />}
-                  DOCX
-                </Button> */}
                 <Button onClick={() => handleDownload()} disabled={generating}>
                   <Download className="w-4 h-4 mr-2" />
                   {!hasAccess(template) && <Lock className="w-3 h-3 mr-1 opacity-60" />}
@@ -421,11 +419,14 @@ const ResumeForm = () => {
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center gap-2 mb-3">
+            {/* Seletor de templates */}
+            <div className="bg-card border border-border rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-4">
                 <Palette className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground font-medium">Escolha o template:</span>
+                <span className="text-sm font-semibold text-foreground">Escolha o template:</span>
               </div>
+
+              {/* Templates + carta de apresentação na mesma linha */}
               <div className="flex flex-wrap gap-3">
                 {TEMPLATES.map((t) => {
                   const locked = !hasAccess(t.id);
@@ -437,10 +438,10 @@ const ResumeForm = () => {
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border relative ${
                         active
                           ? "bg-primary text-primary-foreground border-primary shadow-glow"
-                          : "bg-card text-foreground border-border hover:border-primary/50"
+                          : "bg-background text-foreground border-border hover:border-primary/50"
                       }`}
                     >
-                      {locked && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-50" />}
+                      {locked && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-40" />}
                       {t.name}
                       <span className="block text-[10px] opacity-70">{t.description}</span>
                       {t.free ? (
@@ -453,16 +454,44 @@ const ResumeForm = () => {
                     </button>
                   );
                 })}
-              </div>
-              {!isPremium && !isAdmin && (
-                <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+
+                {/* Card carta de apresentação — mesmo estilo dos templates */}
+                <div
+                  className={`px-4 py-2 rounded-lg text-sm border relative flex flex-col justify-between ${
+                    isPremium || isAdmin
+                      ? "bg-background text-foreground border-border"
+                      : "bg-background text-foreground border-border opacity-70"
+                  }`}
+                >
+                  {!(isPremium || isAdmin) && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-40" />}
                   <div>
-                    <p className="font-semibold text-amber-900 text-sm">✨ Desbloqueie os 6 templates premium por apenas R$&nbsp;9,90</p>
-                    <p className="text-xs text-amber-700">Pagamento único · acesso vitalício · PIX ou cartão</p>
+                    <span className="font-medium flex items-center gap-1">
+                      <Mail className="w-3 h-3" /> Carta de Apresentação
+                    </span>
+                    <span className="block text-[10px] opacity-70">Gerada por IA com seus dados</span>
+                    <span className="block text-[9px] text-amber-600 font-bold">
+                      {isPremium || isAdmin ? "PREMIUM ✓" : "PREMIUM — R$9,90"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Banner premium */}
+              {!isPremium && !isAdmin && (
+                <div className="mt-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="space-y-2">
+                    <p className="font-semibold text-amber-900 dark:text-amber-300 text-sm">
+                      ✨ Desbloqueie tudo por apenas R$&nbsp;9,90
+                    </p>
+                    <ul className="text-xs text-amber-800 dark:text-amber-400 space-y-1">
+                      <li className="flex items-center gap-2"><FileText className="w-3 h-3 flex-shrink-0" /> Todos os templates premium</li>
+                      <li className="flex items-center gap-2"><Mail className="w-3 h-3 flex-shrink-0" /> Carta de apresentação gerada por IA</li>
+                      <li className="flex items-center gap-2"><Check className="w-3 h-3 flex-shrink-0" /> Acesso vitalício · pagamento único</li>
+                    </ul>
                   </div>
                   <Button
                     size="sm"
-                    className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
+                    className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0 w-full sm:w-auto"
                     onClick={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
                   >
                     Desbloquear agora
@@ -471,17 +500,29 @@ const ResumeForm = () => {
               )}
             </div>
 
-            <div className="flex justify-end">
-              <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
-                Limpar tudo e recomeçar
-              </Button>
-            </div>
+            {/* Carta de apresentação expandida (só premium) */}
+            {(isPremium || isAdmin) && (
+              <CoverLetterGenerator
+                data={data}
+                isPremium={isPremium}
+                isAdmin={isAdmin}
+                onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+              />
+            )}
 
+            {/* Prévia do currículo — largura total */}
             <div className="w-full overflow-x-auto pb-8 -mx-4 px-4">
               <div className="min-w-[794px]">
                 <ResumePreview data={data} template={template} />
               </div>
             </div>
+
+            <div className="flex justify-end pb-4">
+              <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
+                Limpar tudo e recomeçar
+              </Button>
+            </div>
+
           </div>
         )}
       </main>
