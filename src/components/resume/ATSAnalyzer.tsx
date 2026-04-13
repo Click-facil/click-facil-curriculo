@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Loader2, CheckCircle2, AlertCircle, XCircle, TrendingUp } from "lucide-react";
 import { ResumeData } from "@/types/resume";
+import { trackATSAnalyzed } from "@/lib/analytics";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -155,6 +156,7 @@ export function ATSAnalyzer({ data }: ATSAnalyzerProps) {
 
       const parsed: ATSResult = JSON.parse(match[0]);
       setResult(parsed);
+      trackATSAnalyzed(parsed.nota);
     } catch (err: unknown) {
       setError("Não foi possível analisar o currículo. Tente recarregar a página.");
     } finally {

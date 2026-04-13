@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Sparkles, Loader2, Copy, Check, Lock, RefreshCw, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ResumeData } from "@/types/resume";
+import { trackCoverLetterGenerated, trackUnlockIntent } from "@/lib/analytics";
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const COOLDOWN_SEGUNDOS = 8;
@@ -109,6 +110,7 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
       if (!resultado) throw new Error("Resposta vazia da IA");
 
       setCarta(resultado.trim());
+      trackCoverLetterGenerated();
       iniciarCooldown();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao gerar carta.");
@@ -146,7 +148,7 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
         <Button
           size="sm"
           className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-          onClick={onUnlock}
+          onClick={() => { trackUnlockIntent("card_carta"); onUnlock(); }}
         >
           Desbloquear por R$&nbsp;9,90
         </Button>

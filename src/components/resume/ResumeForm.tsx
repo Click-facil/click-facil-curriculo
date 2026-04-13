@@ -23,6 +23,13 @@ import { toast } from "sonner";
 // import { exportToDocx } from "@/lib/docx-export";
 import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
 import type { User as FirebaseUser } from "firebase/auth";
+import {
+  trackStepCompleted,
+  trackResumeCompleted,
+  trackPDFDownloaded,
+  trackUnlockIntent,
+  trackPremiumPurchased,
+} from "@/lib/analytics";
 
 const STEPS = ["Dados Pessoais", "Formação", "Experiência", "Cursos", "Habilidades", "Finalizar"];
 const storageKey = (uid: string | null) => `clickfacil_resume_${uid || "guest"}`;
@@ -92,6 +99,7 @@ const ResumeForm = () => {
     if (params.get("payment") === "success" && user && !isAdmin) {
       grantPremium(user.uid).then(() => {
         setIsPremium(true);
+        trackPremiumPurchased();
         toast.success("🎉 Pagamento confirmado! Acesso premium liberado.");
         window.history.replaceState({}, "", "/");
       });
@@ -138,6 +146,7 @@ const ResumeForm = () => {
   const handleCheckoutSuccess = () => {
     setShowCheckout(false);
     setIsPremium(true);
+    trackPremiumPurchased();
     toast.success("🎉 Acesso premium liberado!");
     executePendingAction();
   };
@@ -183,7 +192,10 @@ const ResumeForm = () => {
         return;
       }
     }
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    const nextStep = Math.min(step + 1, STEPS.length - 1);
+    trackStepCompleted(step + 1, STEPS[step]);
+    if (nextStep === STEPS.length - 1) trackResumeCompleted();
+    setStep(nextStep);
   };
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
@@ -236,6 +248,7 @@ const ResumeForm = () => {
       pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
       const name = data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu";
       pdf.save(`curriculo-${name}.pdf`);
+      trackPDFDownloaded(template, isPremium);
       toast.success("Currículo baixado com sucesso!");
     } catch (err) {
       console.error(err);
@@ -502,7 +515,7 @@ const ResumeForm = () => {
                   <Button
                     size="sm"
                     className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0 w-full sm:w-auto"
-                    onClick={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+                    onClick={() => { trackUnlockIntent("banner_templates"); if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
                   >
                     Desbloquear agora
                   </Button>
