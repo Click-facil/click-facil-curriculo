@@ -437,7 +437,7 @@ const ResumeForm = () => {
               </div>
 
               {/* Templates + carta de apresentação na mesma linha */}
-              <div className="flex flex-wrap gap-3">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
                 {TEMPLATES.map((t) => {
                   const locked = !hasAccess(t.id);
                   const active = template === t.id;
@@ -445,7 +445,7 @@ const ResumeForm = () => {
                     <button
                       key={t.id}
                       onClick={() => handleSelectTemplate(t.id)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border relative ${
+                      className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium transition-all border relative ${
                         active
                           ? "bg-primary text-primary-foreground border-primary shadow-glow"
                           : "bg-background text-foreground border-border hover:border-primary/50"
@@ -467,7 +467,7 @@ const ResumeForm = () => {
 
                 {/* Card carta de apresentação — mesmo estilo dos templates */}
                 <div
-                  className={`px-4 py-2 rounded-lg text-sm border relative flex flex-col justify-between ${
+                  className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm border relative flex flex-col justify-between ${
                     isPremium || isAdmin
                       ? "bg-background text-foreground border-border"
                       : "bg-background text-foreground border-border opacity-70"
