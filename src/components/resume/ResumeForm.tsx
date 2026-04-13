@@ -510,11 +510,39 @@ const ResumeForm = () => {
               )}
             </div>
 
-            {/* Layout lateral: coluna esquerda (ATS + carta) | coluna direita (prévia) */}
-            <div className="flex flex-col xl:flex-row gap-6 items-start">
+            {/* Botão limpar — antes dos blocos */}
+            <div className="flex justify-end">
+              <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
+                Limpar tudo e recomeçar
+              </Button>
+            </div>
 
-              {/* Coluna esquerda — ATS + carta premium */}
-              <div className="w-full xl:w-72 flex-shrink-0 space-y-4">
+            {/* Mobile: prévia primeiro, depois ATS + carta */}
+            <div className="block xl:hidden space-y-6">
+              <div className="w-full overflow-hidden" style={{ height: "505px" }}>
+                <div
+                  style={{
+                    transform: "scale(0.45)",
+                    transformOrigin: "top left",
+                    width: "222%",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <ResumePreview data={data} template={template} />
+                </div>
+              </div>
+              <ATSAnalyzer data={data} />
+              <CoverLetterGenerator
+                data={data}
+                isPremium={isPremium}
+                isAdmin={isAdmin}
+                onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+              />
+            </div>
+
+            {/* Desktop: coluna lateral esquerda (ATS + carta) | coluna direita (prévia) */}
+            <div className="hidden xl:flex flex-row gap-6 items-start pb-8">
+              <div className="w-72 flex-shrink-0 space-y-4">
                 <ATSAnalyzer data={data} />
                 <CoverLetterGenerator
                   data={data}
@@ -523,39 +551,11 @@ const ResumeForm = () => {
                   onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
                 />
               </div>
-
-              {/* Coluna direita — prévia do currículo */}
-              <div className="flex-1 min-w-0 w-full">
-
-                {/* Mobile/tablet: prévia com escala proporcional */}
-                <div className="block xl:hidden w-full overflow-hidden pb-8">
-                  <div
-                    style={{
-                      transform: "scale(0.45)",
-                      transformOrigin: "top left",
-                      width: "222%",
-                      pointerEvents: "none",
-                    }}
-                  >
-                    <ResumePreview data={data} template={template} />
-                  </div>
+              <div className="flex-1 min-w-0 overflow-x-auto">
+                <div className="min-w-[794px]">
+                  <ResumePreview data={data} template={template} />
                 </div>
-
-                {/* Desktop: prévia tamanho real com scroll horizontal */}
-                <div className="hidden xl:block w-full overflow-x-auto pb-8">
-                  <div className="min-w-[794px]">
-                    <ResumePreview data={data} template={template} />
-                  </div>
-                </div>
-
               </div>
-
-            </div>
-
-            <div className="flex justify-end pb-4">
-              <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
-                Limpar tudo e recomeçar
-              </Button>
             </div>
 
           </div>
