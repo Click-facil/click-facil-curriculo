@@ -510,7 +510,7 @@ const ResumeForm = () => {
               )}
             </div>
 
-            {/* Mobile: prévia → limpar → ATS + carta */}
+            {/* Mobile: prévia → ATS → carta → limpar */}
             <div className="block xl:hidden space-y-6">
               <div className="w-full overflow-hidden" style={{ height: "505px" }}>
                 <div
@@ -524,11 +524,6 @@ const ResumeForm = () => {
                   <ResumePreview data={data} template={template} />
                 </div>
               </div>
-              <div className="flex justify-end">
-                <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
-                  Limpar tudo e recomeçar
-                </Button>
-              </div>
               <ATSAnalyzer data={data} />
               <CoverLetterGenerator
                 data={data}
@@ -536,9 +531,14 @@ const ResumeForm = () => {
                 isAdmin={isAdmin}
                 onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
               />
+              <div className="flex justify-end pb-4">
+                <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
+                  Limpar tudo e recomeçar
+                </Button>
+              </div>
             </div>
 
-            {/* Desktop: coluna lateral esquerda (ATS + carta) | coluna direita (prévia + limpar) */}
+            {/* Desktop: coluna lateral esquerda (ATS + carta + limpar) | coluna direita (prévia) */}
             <div className="hidden xl:flex flex-row gap-6 items-start pb-8">
               <div className="w-72 flex-shrink-0 space-y-4">
                 <ATSAnalyzer data={data} />
@@ -548,17 +548,15 @@ const ResumeForm = () => {
                   isAdmin={isAdmin}
                   onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
                 />
-              </div>
-              <div className="flex-1 min-w-0 space-y-3">
-                <div className="overflow-x-auto">
-                  <div className="min-w-[794px]">
-                    <ResumePreview data={data} template={template} />
-                  </div>
-                </div>
                 <div className="flex justify-end">
                   <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
                     Limpar tudo e recomeçar
                   </Button>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0 overflow-x-auto">
+                <div className="min-w-[794px]">
+                  <ResumePreview data={data} template={template} />
                 </div>
               </div>
             </div>
