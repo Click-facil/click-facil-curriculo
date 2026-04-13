@@ -18,7 +18,7 @@ function buildPrompt(data: ResumeData): string {
 
   const experienciaTexto = experience.length > 0
     ? experience.map((e) =>
-        `- ${e.position} na empresa ${e.company} (${e.city})${e.description ? `: ${e.description}` : ""}`
+        `- ${e.position} em ${e.company}${e.description ? `: ${e.description.slice(0, 120)}` : ""}`
       ).join("\n")
     : "Sem experiência profissional listada.";
 
@@ -27,27 +27,32 @@ function buildPrompt(data: ResumeData): string {
     : "Sem formação listada.";
 
   const habilidadesTexto = skills.length > 0
-    ? skills.map((s) => s.name).join(", ")
+    ? skills.slice(0, 5).map((s) => s.name).join(", ")
     : "Não informadas.";
 
   return `Você é um especialista em RH e redação profissional em português brasileiro.
-Escreva uma carta de apresentação profissional e persuasiva para o candidato abaixo.
-A carta deve ser direta, em tom profissional mas humano, com no máximo 4 parágrafos curtos.
-Estrutura: abertura com interesse na vaga → resumo da experiência → habilidades relevantes → encerramento com disponibilidade.
-Não mencione o nome de nenhuma empresa específica para a qual está se candidatando (deixe genérico).
-Retorne APENAS o texto da carta, sem título, sem "Assunto:", sem explicações e sem formatação markdown.
+Escreva uma carta de apresentação CURTA e DIRETA para o candidato abaixo.
+
+REGRAS OBRIGATÓRIAS:
+- Máximo 3 parágrafos curtos (4-5 linhas cada)
+- Tom profissional e humano, sem exageros
+- Use APENAS as informações fornecidas — NUNCA use placeholders como [TESTE], [cargo], [empresa]
+- Se algum dado estiver ausente, ignore aquele ponto e escreva com o que há
+- Não repita ideias entre parágrafos
+- Termine com "Atenciosamente,\\n${personalInfo.fullName}"
+- Retorne APENAS o texto da carta, sem título, sem "Assunto:", sem markdown
+
+ESTRUTURA:
+1. Abertura: interesse em contribuir na área do objetivo profissional
+2. Diferencial: experiência ou formação mais relevante com resultado concreto
+3. Encerramento: disponibilidade e convite para contato
 
 DADOS DO CANDIDATO:
-Nome: ${personalInfo.fullName}
-Cidade: ${personalInfo.city} - ${personalInfo.state}
-Objetivo profissional: ${personalInfo.objective || "Não informado"}
-
-Experiências:
-${experienciaTexto}
-
-Formação:
-${formacaoTexto}
-
+Nome: ${personalInfo.fullName || "Não informado"}
+Cidade: ${personalInfo.city}${personalInfo.state ? ` - ${personalInfo.state}` : ""}
+Objetivo: ${personalInfo.objective || "Não informado"}
+Experiências: ${experienciaTexto}
+Formação: ${formacaoTexto}
 Habilidades: ${habilidadesTexto}`;
 }
 
@@ -151,41 +156,39 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
 
   // --- ESTADO: tem acesso premium ---
   return (
-    <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+    <div className="rounded-xl border border-border bg-card p-4 space-y-3">
       {/* Cabeçalho */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-bold text-foreground text-base flex items-center gap-2">
-            <Mail className="w-4 h-4 text-muted-foreground" /> Carta de Apresentação com IA
-            <span className="text-xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">PREMIUM</span>
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            A IA gera uma carta profissional baseada no seu currículo, pronta para você{" "}
-            <strong>copiar e colar no corpo do e-mail</strong> ao enviar seu CV para recrutadores.
-          </p>
-        </div>
+      <div>
+        <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+          <Mail className="w-3.5 h-3.5 text-muted-foreground" /> Carta de Apresentação
+          <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">PREMIUM</span>
+        </h3>
+        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+          Gerada por IA, pronta para <strong>colar no corpo do e-mail</strong> ao enviar seu CV.
+        </p>
       </div>
 
       {/* Botão gerar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Button
           type="button"
+          size="sm"
           onClick={handleGerar}
           disabled={loading || emCooldown}
-          className="gap-2"
+          className="gap-1.5 text-xs"
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : carta ? (
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5" />
           ) : (
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-3.5 h-3.5" />
           )}
-          {loading ? "Gerando carta..." : carta ? "Gerar nova versão" : "Gerar carta com IA"}
+          {loading ? "Gerando..." : carta ? "Nova versão" : "Gerar carta"}
         </Button>
         {emCooldown && (
           <span className="text-xs text-muted-foreground tabular-nums">
-            Aguarde {cooldown}s...
+            {cooldown}s...
           </span>
         )}
       </div>
@@ -199,22 +202,20 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
 
       {/* Resultado */}
       {carta && (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {/* Instrução de uso */}
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
-            <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
-            <p className="text-xs text-blue-800 dark:text-blue-300">
-              <strong>Como usar:</strong> clique em "Copiar texto" e cole diretamente no corpo do e-mail ao enviar seu currículo. Personalize o nome do recrutador se souber.
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800">
+            <span className="text-blue-500 text-sm mt-0.5">💡</span>
+            <p className="text-[11px] text-blue-800 dark:text-blue-300 leading-relaxed">
+              Cole no corpo do e-mail ao enviar seu CV. Personalize o nome do recrutador se souber.
             </p>
           </div>
 
-          {/* Texto da carta */}
-          <div className="relative">
-            <div className="rounded-lg border border-border bg-muted/30 p-4">
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap font-sans">
-                {carta}
-              </p>
-            </div>
+          {/* Texto da carta com scroll */}
+          <div className="rounded-lg border border-border bg-muted/30 p-3 max-h-64 overflow-y-auto">
+            <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans">
+              {carta}
+            </p>
           </div>
 
           {/* Botão copiar */}
@@ -227,9 +228,9 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
               className="gap-2 transition-all"
             >
               {copied ? (
-                <><Check className="w-4 h-4" /> Copiado!</>
+                <><Check className="w-3.5 h-3.5" /> Copiado!</>
               ) : (
-                <><Copy className="w-4 h-4" /> Copiar texto</>
+                <><Copy className="w-3.5 h-3.5" /> Copiar texto</>
               )}
             </Button>
           </div>
