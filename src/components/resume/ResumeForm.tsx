@@ -152,18 +152,27 @@ const ResumeForm = () => {
   const handleSelectTemplate = (t: TemplateStyle) => setTemplate(t);
 
   const getProgress = useCallback(() => {
-    let filled = 0;
     const pi = data.personalInfo;
-    if (pi.fullName) filled++;
-    if (pi.email) filled++;
-    if (pi.phone) filled++;
-    if (pi.city) filled++;
-    if (pi.state) filled++;
-    if (pi.objective) filled++;
-    if (data.education.length > 0) filled++;
-    if (data.experience.length > 0) filled++;
-    if (data.skills.length > 0) filled++;
-    return Math.round((filled / 9) * 100);
+
+    // Cada passo vale 20 pontos (5 passos × 20 = 100)
+    // Passo 1 — Dados Pessoais: campos obrigatórios
+    const camposP1 = [pi.fullName, pi.email, pi.phone, pi.city, pi.state, pi.objective];
+    const p1 = Math.round((camposP1.filter(Boolean).length / camposP1.length) * 20);
+
+    // Passo 2 — Formação: pelo menos 1 entrada
+    const p2 = data.education.length > 0 ? 20 : 0;
+
+    // Passo 3 — Experiência: pelo menos 1 entrada (opcional, vale metade se vazio)
+    const p3 = data.experience.length > 0 ? 20 : 10;
+
+    // Passo 4 — Cursos: pelo menos 1 entrada (opcional, vale metade se vazio)
+    const p4 = data.courses.length > 0 ? 20 : 10;
+
+    // Passo 5 — Habilidades: pelo menos 3 habilidades
+    const totalSkills = data.skills.length;
+    const p5 = totalSkills >= 3 ? 20 : Math.round((totalSkills / 3) * 20);
+
+    return Math.min(p1 + p2 + p3 + p4 + p5, 100);
   }, [data]);
 
   const next = () => {
@@ -507,23 +516,38 @@ const ResumeForm = () => {
               {/* Coluna esquerda — ATS + carta premium */}
               <div className="w-full xl:w-72 flex-shrink-0 space-y-4">
                 <ATSAnalyzer data={data} />
-                {(isPremium || isAdmin) && (
-                  <CoverLetterGenerator
-                    data={data}
-                    isPremium={isPremium}
-                    isAdmin={isAdmin}
-                    onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
-                  />
-                )}
+                <CoverLetterGenerator
+                  data={data}
+                  isPremium={isPremium}
+                  isAdmin={isAdmin}
+                  onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+                />
               </div>
 
               {/* Coluna direita — prévia do currículo */}
-              <div className="flex-1 min-w-0">
-                <div className="w-full overflow-x-auto pb-8">
+              <div className="flex-1 min-w-0 w-full">
+
+                {/* Mobile/tablet: prévia com escala proporcional */}
+                <div className="block xl:hidden w-full overflow-hidden pb-8">
+                  <div
+                    style={{
+                      transform: "scale(0.45)",
+                      transformOrigin: "top left",
+                      width: "222%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <ResumePreview data={data} template={template} />
+                  </div>
+                </div>
+
+                {/* Desktop: prévia tamanho real com scroll horizontal */}
+                <div className="hidden xl:block w-full overflow-x-auto pb-8">
                   <div className="min-w-[794px]">
                     <ResumePreview data={data} template={template} />
                   </div>
                 </div>
+
               </div>
 
             </div>
