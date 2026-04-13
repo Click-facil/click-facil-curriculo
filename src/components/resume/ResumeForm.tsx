@@ -18,6 +18,7 @@ import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
 import CheckoutModal from "./CheckoutModal";
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
+import { ATSAnalyzer } from "./ATSAnalyzer";
 import { toast } from "sonner";
 // import { exportToDocx } from "@/lib/docx-export";
 import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
@@ -500,21 +501,31 @@ const ResumeForm = () => {
               )}
             </div>
 
-            {/* Carta de apresentação expandida (só premium) */}
-            {(isPremium || isAdmin) && (
-              <CoverLetterGenerator
-                data={data}
-                isPremium={isPremium}
-                isAdmin={isAdmin}
-                onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
-              />
-            )}
+            {/* Layout lateral: coluna esquerda (ATS + carta) | coluna direita (prévia) */}
+            <div className="flex flex-col xl:flex-row gap-6 items-start">
 
-            {/* Prévia do currículo — largura total */}
-            <div className="w-full overflow-x-auto pb-8 -mx-4 px-4">
-              <div className="min-w-[794px]">
-                <ResumePreview data={data} template={template} />
+              {/* Coluna esquerda — ATS + carta premium */}
+              <div className="w-full xl:w-72 flex-shrink-0 space-y-4">
+                <ATSAnalyzer data={data} />
+                {(isPremium || isAdmin) && (
+                  <CoverLetterGenerator
+                    data={data}
+                    isPremium={isPremium}
+                    isAdmin={isAdmin}
+                    onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+                  />
+                )}
               </div>
+
+              {/* Coluna direita — prévia do currículo */}
+              <div className="flex-1 min-w-0">
+                <div className="w-full overflow-x-auto pb-8">
+                  <div className="min-w-[794px]">
+                    <ResumePreview data={data} template={template} />
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div className="flex justify-end pb-4">
