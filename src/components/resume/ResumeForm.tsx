@@ -209,25 +209,65 @@ const ResumeForm = () => {
       const element = document.getElementById("resume-preview");
       if (!element) { toast.error("Prévia não encontrada."); return; }
 
-      // Aguarda fontes e imagens carregarem — mais tempo no desktop
+      // Aguarda fontes e imagens carregarem
       await document.fonts.ready;
-      await new Promise((r) => setTimeout(r, 800));
+      await new Promise((r) => setTimeout(r, 600));
 
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
-      // Clona fora da tela para não afetar o dark mode da página
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.position = "fixed";
-      clone.style.top = "-99999px";
-      clone.style.left = "-99999px";
-      clone.style.backgroundColor = "#ffffff";
-      clone.style.colorScheme = "light";
-      clone.style.width = "794px"; // largura A4 fixa — evita variação entre telas
-      document.body.appendChild(clone);
+      // Cria um container visível mas fora do fluxo, com dimensões A4 exatas.
+      // Renderizar dentro do viewport (left:0, top fora mas com overflow visible)
+      // garante que o browser aplique as mesmas métricas de fonte da prévia real,
+      // evitando o bug de palavras juntas / espaçamento errado causado por
+      // renderização off-screen com hinting diferente.
+      const wrapper = document.createElement("div");
+      wrapper.style.cssText = [
+        "position:fixed",
+        "left:0",
+        "top:0",
+        "width:794px",
+        "z-index:-9999",
+        "pointer-events:none",
+        "overflow:hidden",
+        "background:#fff",
+        "color-scheme:light",
+      ].join(";");
 
-      // Aguarda o clone renderizar
-      await new Promise((r) => setTimeout(r, 300));
+      const clone = element.cloneNode(true) as HTMLElement;
+
+      // Forçar renderização de texto consistente — evita variações de kerning
+      // e hinting que o html2canvas não consegue reproduzir fielmente
+      clone.style.cssText += [
+        ";width:794px",
+        "background-color:#ffffff",
+        "color-scheme:light",
+        // Chave: desliga kerning e optimizações que causam espaçamento irregular
+        "font-kerning:none",
+        "text-rendering:geometricPrecision",
+        "-webkit-font-smoothing:antialiased",
+        "font-variant-ligatures:none",
+      ].join(";");
+
+      // Propagar as mesmas propriedades para todos os descendentes de texto
+      const allElements = clone.querySelectorAll<HTMLElement>("*");
+      allElements.forEach((el) => {
+        el.style.fontKerning = "none";
+        el.style.textRendering = "geometricPrecision";
+        (el.style as unknown as Record<string, string>)["-webkit-font-smoothing"] = "antialiased";
+        el.style.fontVariantLigatures = "none";
+        // Garantir que espaços e quebras de linha se comportem igual à prévia
+        if (el.style.whiteSpace === "" || el.style.whiteSpace === "normal") {
+          el.style.whiteSpace = "pre-wrap";
+          el.style.wordBreak = "break-word";
+        }
+      });
+
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      // Aguarda o clone renderizar com as fontes corretas
+      await new Promise((r) => setTimeout(r, 500));
 
       let canvas: HTMLCanvasElement;
       try {
@@ -241,9 +281,16 @@ const ResumeForm = () => {
           scrollX: 0,
           scrollY: 0,
           foreignObjectRendering: false,
+          // Informa a largura exata do documento para evitar reflow
+          windowWidth: 794,
+          windowHeight: clone.scrollHeight,
+          width: 794,
+          height: clone.scrollHeight,
+          x: 0,
+          y: 0,
         });
       } finally {
-        document.body.removeChild(clone);
+        document.body.removeChild(wrapper);
       }
 
       // Valida canvas antes de exportar
@@ -251,12 +298,12 @@ const ResumeForm = () => {
         throw new Error("Canvas vazio ou inválido");
       }
 
-      // Usa JPEG para evitar erros de assinatura PNG no jsPDF
-      const imgData = canvas.toDataURL("image/jpeg", 0.98);
+      // PNG preserva texto nítido; JPEG pode criar artefatos em texto pequeno
+      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       const pdfW = 210;
       const pdfH = (canvas.height * pdfW) / canvas.width;
-      pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
+      pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
       const name = data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu";
       pdf.save(`curriculo-${name}.pdf`);
       trackPDFDownloaded(template, isPremium);
