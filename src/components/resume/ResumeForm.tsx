@@ -240,14 +240,19 @@ const ResumeForm = () => {
         "font-variant-ligatures:none",
       ].join(";");
 
-      // Propaga propriedades para descendentes — SEM mexer em whiteSpace
-      // O whiteSpace:pre-wrap causa palavras coladas no html2canvas
+      // Propaga propriedades para descendentes
       const allElements = clone.querySelectorAll<HTMLElement>("*");
+      const problematicTemplates: TemplateStyle[] = ["classic", "elegant", "academic", "tech"];
+      const needsWhiteSpaceFix = problematicTemplates.includes(template);
       allElements.forEach((el) => {
         el.style.fontKerning = "none";
         el.style.textRendering = "geometricPrecision";
         el.style.fontVariantLigatures = "none";
-        // NÃO alterar whiteSpace aqui — causa bug de espaçamento
+        // Para templates com problema de espaçamento, aplicar whiteSpace fix
+        if (needsWhiteSpaceFix && (el.style.whiteSpace === "" || el.style.whiteSpace === "normal")) {
+          el.style.whiteSpace = "pre-wrap";
+          el.style.wordBreak = "break-word";
+        }
       });
 
       wrapper.appendChild(clone);
