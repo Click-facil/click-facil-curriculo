@@ -209,21 +209,25 @@ const ResumeForm = () => {
       const element = document.getElementById("resume-preview");
       if (!element) { toast.error("Prévia não encontrada."); return; }
 
+      // Aguarda fontes e imagens carregarem — mais tempo no desktop
       await document.fonts.ready;
-      await new Promise((r) => setTimeout(r, 300));
+      await new Promise((r) => setTimeout(r, 800));
 
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
 
-      // Clona o elemento fora da tela — sem piscada, sem afetar o dark mode da página
+      // Clona fora da tela para não afetar o dark mode da página
       const clone = element.cloneNode(true) as HTMLElement;
       clone.style.position = "fixed";
       clone.style.top = "-99999px";
       clone.style.left = "-99999px";
       clone.style.backgroundColor = "#ffffff";
       clone.style.colorScheme = "light";
-      clone.style.width = element.offsetWidth + "px";
+      clone.style.width = "794px"; // largura A4 fixa — evita variação entre telas
       document.body.appendChild(clone);
+
+      // Aguarda o clone renderizar
+      await new Promise((r) => setTimeout(r, 300));
 
       let canvas: HTMLCanvasElement;
       try {
@@ -233,26 +237,33 @@ const ResumeForm = () => {
           allowTaint: false,
           backgroundColor: "#ffffff",
           logging: false,
-          imageTimeout: 0,
+          imageTimeout: 15000,
           scrollX: 0,
           scrollY: 0,
+          foreignObjectRendering: false,
         });
       } finally {
         document.body.removeChild(clone);
       }
 
-      const imgData = canvas.toDataURL("image/png", 1.0);
+      // Valida canvas antes de exportar
+      if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        throw new Error("Canvas vazio ou inválido");
+      }
+
+      // Usa JPEG para evitar erros de assinatura PNG no jsPDF
+      const imgData = canvas.toDataURL("image/jpeg", 0.98);
       const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
       const pdfW = 210;
       const pdfH = (canvas.height * pdfW) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfW, pdfH);
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfW, pdfH);
       const name = data.personalInfo.fullName.replace(/\s+/g, "-").toLowerCase() || "meu";
       pdf.save(`curriculo-${name}.pdf`);
       trackPDFDownloaded(template, isPremium);
       toast.success("Currículo baixado com sucesso!");
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao gerar PDF.");
+      toast.error("Erro ao gerar PDF. Tente novamente.");
     } finally {
       setGenerating(false);
     }
