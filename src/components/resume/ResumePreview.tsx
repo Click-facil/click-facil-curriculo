@@ -415,8 +415,7 @@ const AcademicTemplate = ({ data }: { data: ResumeData }) => {
           {personalInfo.photo && <img src={personalInfo.photo} alt="Foto" style={{ width: "88px", height: "112px", objectFit: "cover", borderRadius: "4px", border: "2px solid white" }} />}
           <div style={{ flex: 1 }}>
             <h1 style={{ fontSize: "26px", fontWeight: "bold", letterSpacing: "0.04em", marginBottom: "4px", wordBreak: "break-word" }}>{personalInfo.fullName || "SEU NOME"}</h1>
-            <div style={{ width: "48px", height: "2px", backgroundColor: "#ef9a9a", marginBottom: "10px" }} />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "10px", opacity: 0.85 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", fontSize: "10px", opacity: 0.85, marginTop: "10px" }}>
               {personalInfo.email && <span>✉ {personalInfo.email}</span>}
               {personalInfo.phone && <span>☎ {personalInfo.phone}</span>}
               {(personalInfo.city || personalInfo.state) && <span>⌖ {[personalInfo.city, personalInfo.state].filter(Boolean).join(", ")}</span>}
