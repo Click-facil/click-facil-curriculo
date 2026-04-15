@@ -209,8 +209,10 @@ const ResumeForm = () => {
       const element = document.getElementById("resume-preview");
       if (!element) { toast.error("Prévia não encontrada."); return; }
 
+      const isEdge = /Edg/.test(navigator.userAgent);
+
       await document.fonts.ready;
-      await new Promise((r) => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, isEdge ? 800 : 600));
 
       const html2canvas = (await import("html2canvas")).default;
       const { jsPDF } = await import("jspdf");
@@ -242,28 +244,48 @@ const ResumeForm = () => {
 
       // Propaga propriedades para descendentes
       const allElements = clone.querySelectorAll<HTMLElement>("*");
-      const problematicTemplates: TemplateStyle[] = ["classic", "elegant", "academic", "tech"];
-      const needsWhiteSpaceFix = problematicTemplates.includes(template);
       allElements.forEach((el) => {
         el.style.fontKerning = "none";
         el.style.textRendering = "geometricPrecision";
         el.style.fontVariantLigatures = "none";
-        // Para templates com problema de espaçamento, aplicar whiteSpace fix
-        if (needsWhiteSpaceFix && (el.style.whiteSpace === "" || el.style.whiteSpace === "normal")) {
-          el.style.whiteSpace = "pre-wrap";
-          el.style.wordBreak = "break-word";
+        
+        // Edge precisa de whiteSpace explícito
+        if (isEdge) {
+          const computedStyle = window.getComputedStyle(el);
+          const tagName = el.tagName.toLowerCase();
+          
+          // Aplicar pre-wrap apenas em parágrafos de texto longo
+          if (tagName === "p") {
+            el.style.whiteSpace = "pre-wrap";
+            el.style.wordBreak = "break-word";
+          } else if (computedStyle.display === "flex" || computedStyle.display === "inline-flex") {
+            // Flex containers: forçar nowrap e overflow visible
+            el.style.flexWrap = "nowrap";
+            el.style.whiteSpace = "normal"; // normal para permitir quebra dentro dos spans
+            el.style.overflow = "visible";
+          } else if (tagName === "span" || tagName === "div") {
+            // Spans e divs dentro de flex: nowrap
+            el.style.whiteSpace = "nowrap";
+          } else {
+            // Outros elementos: normal
+            el.style.whiteSpace = "normal";
+          }
+          
+          if (el.style.fontFamily) {
+            el.style.fontFamily = el.style.fontFamily + ", Arial, sans-serif";
+          }
         }
       });
 
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
 
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, isEdge ? 700 : 500));
 
       let canvas: HTMLCanvasElement;
       try {
         canvas = await html2canvas(clone, {
-          scale: 2,
+          scale: isEdge ? 3 : 2,
           useCORS: true,
           allowTaint: false,
           backgroundColor: "#ffffff",
@@ -271,7 +293,7 @@ const ResumeForm = () => {
           imageTimeout: 15000,
           scrollX: 0,
           scrollY: 0,
-          foreignObjectRendering: false,
+          foreignObjectRendering: isEdge,
           windowWidth: 794,
           windowHeight: clone.scrollHeight,
           width: 794,
