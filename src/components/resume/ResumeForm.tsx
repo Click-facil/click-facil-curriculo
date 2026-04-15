@@ -205,6 +205,12 @@ const ResumeForm = () => {
       return;
     }
     setGenerating(true);
+    
+    const isEdge = /Edg/.test(navigator.userAgent);
+    if (isEdge) {
+      toast.info("⚠️ Seu PDF pode sofrer alterações por estar usando navegador Edge", { duration: 5000 });
+    }
+    
     try {
       const element = document.getElementById("resume-preview");
       if (!element) { toast.error("Prévia não encontrada."); return; }
