@@ -295,7 +295,7 @@ const TechTemplate = ({ data }: { data: ResumeData }) => {
           </div>
         </div>
         {personalInfo.objective && (
-          <div style={{ marginTop: "16px", padding: "12px 16px", backgroundColor: "#0d1117", borderLeft: `3px solid ${neon}`, borderRadius: "0 4px 4px 0" }}>
+          <div style={{ marginTop: "16px", paddingLeft: "16px", borderLeft: `3px solid ${neon}` }}>
             <span style={{ color: neon, fontSize: "10px" }}>{"/* "}</span>
             <span style={{ color: dim, fontSize: "11px", fontStyle: "italic", textAlign: "left", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>{personalInfo.objective}</span>
             <span style={{ color: neon, fontSize: "10px" }}>{" */"}</span>
@@ -424,7 +424,7 @@ const AcademicTemplate = ({ data }: { data: ResumeData }) => {
           </div>
         </div>
         {personalInfo.objective && (
-          <div style={{ marginTop: "16px", padding: "10px 16px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "4px", fontSize: "11px", fontStyle: "italic", lineHeight: "1.6", textAlign: "left", whiteSpace: "pre-wrap" }}>
+          <div style={{ marginTop: "16px", fontSize: "11px", fontStyle: "italic", lineHeight: "1.6", textAlign: "left", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>
             {personalInfo.objective}
           </div>
         )}
@@ -525,6 +525,10 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
   return (
     <div id="resume-preview" className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Georgia', serif", fontSize: "12px", lineHeight: "1.7", minHeight: "1123px" }}>
+      <style>{`
+        .force-center { text-align: center !important; }
+      `}</style>
+      
       {/* Faixa rosê no topo */}
       <div style={{ height: "8px", backgroundColor: rose, minHeight: "8px" }} />
 
@@ -533,7 +537,7 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
         {personalInfo.photo && (
           <img src={personalInfo.photo} alt="Foto" style={{ width: "88px", height: "88px", borderRadius: "50%", objectFit: "cover", border: `3px solid ${rose}`, display: "block", margin: "0 auto 16px" }} />
         )}
-        <h1 style={{ fontSize: "28px", fontWeight: "bold", color: dark, letterSpacing: "0.12em", textTransform: "uppercase", wordBreak: "break-word", marginBottom: "8px" }}>
+        <h1 className="force-center" style={{ fontSize: "28px", fontWeight: "bold", color: dark, letterSpacing: "0.12em", textTransform: "uppercase", wordBreak: "break-word", marginBottom: "8px", width: "100%" }}>
           {personalInfo.fullName || "SEU NOME"}
         </h1>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "4px", marginBottom: "12px" }}>
@@ -548,7 +552,7 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
           {personalInfo.linkedin && <span>🔗 {personalInfo.linkedin}</span>}
         </div>
         {personalInfo.objective && (
-          <p style={{ marginTop: "14px", fontSize: "11px", color: mid, fontStyle: "italic", maxWidth: "480px", margin: "14px auto 0", lineHeight: "1.7", textAlign: "left", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>{personalInfo.objective}</p>
+          <p className="force-center" style={{ marginTop: "14px", fontSize: "11px", color: mid, fontStyle: "italic", maxWidth: "480px", margin: "14px auto 0", lineHeight: "1.7", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>{personalInfo.objective}</p>
         )}
       </div>
 
