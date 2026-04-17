@@ -5,7 +5,6 @@ import {
   ArrowLeft, ArrowRight, Download, Eye, EyeOff, FileText,
   Save, Palette, Mail, Info, Lock, LogOut, User, Check,
 } from "lucide-react";
-import ThemeToggle from "@/components/ThemeToggle";
 import { ResumeData, emptyResume } from "@/types/resume";
 import StepIndicator from "./StepIndicator";
 import PersonalInfoStep from "./PersonalInfoStep";
@@ -398,7 +397,6 @@ const ResumeForm = () => {
                   <User className="w-3.5 h-3.5" /> Entrar
                 </button>
               )}
-              <ThemeToggle />
             </div>
           </div>
           <div className="mt-4">
