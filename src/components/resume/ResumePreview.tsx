@@ -525,34 +525,32 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
   return (
     <div id="resume-preview" className="bg-white w-full max-w-[210mm] mx-auto shadow-elevated"
       style={{ fontFamily: "'Georgia', serif", fontSize: "12px", lineHeight: "1.7", minHeight: "1123px" }}>
-      <style>{`
-        .force-center { text-align: center !important; }
-      `}</style>
-      
       {/* Faixa rosê no topo */}
       <div style={{ height: "8px", backgroundColor: rose, minHeight: "8px" }} />
 
-      {/* Header */}
-      <div style={{ padding: "36px 48px 24px", textAlign: "center", backgroundColor: light }}>
+      {/* Header com Flexbox Forçado (Isto garante o alinhamento no Canvas) */}
+      <div style={{ padding: "36px 48px 24px", display: "flex", flexDirection: "column", alignItems: "center", backgroundColor: light }}>
         {personalInfo.photo && (
-          <img src={personalInfo.photo} alt="Foto" style={{ width: "88px", height: "88px", borderRadius: "50%", objectFit: "cover", border: `3px solid ${rose}`, display: "block", margin: "0 auto 16px" }} />
+          <img src={personalInfo.photo} alt="Foto" style={{ width: "88px", height: "88px", borderRadius: "50%", objectFit: "cover", border: `3px solid ${rose}`, display: "block", marginBottom: "16px" }} />
         )}
-        <h1 className="force-center" style={{ fontSize: "28px", fontWeight: "bold", color: dark, letterSpacing: "0.12em", textTransform: "uppercase", wordBreak: "break-word", marginBottom: "8px", width: "100%" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: "bold", color: dark, letterSpacing: "0.12em", textTransform: "uppercase", wordBreak: "break-word", marginBottom: "8px", textAlign: "center" }}>
           {personalInfo.fullName || "SEU NOME"}
         </h1>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "4px", marginBottom: "12px" }}>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "4px", marginBottom: "12px", width: "100%" }}>
           <div style={{ width: "32px", height: "2px", backgroundColor: rose, minHeight: "2px" }} />
           <div style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: rose, minWidth: "6px", minHeight: "6px" }} />
           <div style={{ width: "32px", height: "2px", backgroundColor: rose, minHeight: "2px" }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "20px", fontSize: "10px", color: mid }}>
+        <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "20px", fontSize: "10px", color: mid, width: "100%" }}>
           {personalInfo.email && <span>✉ {personalInfo.email}</span>}
           {personalInfo.phone && <span>☎ {personalInfo.phone}</span>}
           {(personalInfo.city || personalInfo.state) && <span>⌖ {[personalInfo.city, personalInfo.state].filter(Boolean).join(", ")}</span>}
           {personalInfo.linkedin && <span>🔗 {personalInfo.linkedin}</span>}
         </div>
         {personalInfo.objective && (
-          <p className="force-center" style={{ marginTop: "14px", fontSize: "11px", color: mid, fontStyle: "italic", maxWidth: "480px", margin: "14px auto 0", lineHeight: "1.7", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>{personalInfo.objective}</p>
+          <p style={{ marginTop: "14px", fontSize: "11px", color: mid, fontStyle: "italic", maxWidth: "480px", lineHeight: "1.7", whiteSpace: "pre-wrap", wordSpacing: "1px", textAlign: "center" }}>
+            {personalInfo.objective}
+          </p>
         )}
       </div>
 
