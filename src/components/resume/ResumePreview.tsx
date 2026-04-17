@@ -147,8 +147,8 @@ const ClassicTemplate = ({ data }: { data: ResumeData }) => {
         </div>
       </div>
       <div className="px-10 py-6 space-y-5">
-        {personalInfo.objective && <ClassicSection title="Objetivo Profissional" color={primary} accent={accent}><p className="text-[12px] leading-relaxed" style={{ color: "#333", wordBreak: "break-word" }}>{personalInfo.objective}</p></ClassicSection>}
-        {experience.length > 0 && <ClassicSection title="Experiência Profissional" color={primary} accent={accent}><div className="space-y-4">{experience.map(exp => <div key={exp.id}><div className="flex flex-wrap justify-between items-baseline gap-2"><span className="font-bold text-[12px]" style={{ color: primary, wordBreak: "break-word" }}>{exp.position}</span><span className="text-[10px] italic" style={{ color: "#888" }}>{formatDate(exp.startDate)} — {exp.current ? "Atual" : formatDate(exp.endDate)}</span></div><div className="text-[11px] italic" style={{ color: "#666" }}>{exp.company}{exp.city ? `, ${exp.city}` : ""}</div>{exp.description && <ul className="mt-1.5 space-y-1 text-[11px]" style={{ color: "#444" }}>{exp.description.split("\n").filter(Boolean).map((line, i) => <li key={i} className="flex items-center gap-2"><span className="flex-shrink-0" style={{ color: accent }}>■</span><span style={{ wordBreak: "break-word" }}>{line.replace(/^[-•]\s*/, "")}</span></li>)}</ul>}</div>)}</div></ClassicSection>}
+        {personalInfo.objective && <ClassicSection title="Objetivo Profissional" color={primary} accent={accent}><p className="text-[12px] leading-relaxed" style={{ color: "#333", wordBreak: "break-word", textAlign: "left", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>{personalInfo.objective}</p></ClassicSection>}
+        {experience.length > 0 && <ClassicSection title="Experiência Profissional" color={primary} accent={accent}><div className="space-y-4">{experience.map(exp => <div key={exp.id}><div className="flex flex-wrap justify-between items-baseline gap-2"><span className="font-bold text-[12px]" style={{ color: primary, wordBreak: "break-word" }}>{exp.position}</span><span className="text-[10px] italic" style={{ color: "#888" }}>{formatDate(exp.startDate)} — {exp.current ? "Atual" : formatDate(exp.endDate)}</span></div><div className="text-[11px] italic" style={{ color: "#666" }}>{exp.company}{exp.city ? `, ${exp.city}` : ""}</div>{exp.description && <ul className="mt-1.5 space-y-1 text-[11px]" style={{ color: "#444" }}>{exp.description.split("\n").filter(Boolean).map((line, i) => <li key={i} className="flex items-start gap-2"><span className="flex-shrink-0 mt-1" style={{ color: accent }}>■</span><span style={{ wordBreak: "break-word", textAlign: "left", wordSpacing: "1px", whiteSpace: "pre-wrap" }}>{line.replace(/^[-•]\s*/, "")}</span></li>)}</ul>}</div>)}</div></ClassicSection>}
         {education.length > 0 && <ClassicSection title="Formação Acadêmica" color={primary} accent={accent}><div className="space-y-3">{education.map(edu => <div key={edu.id}><div className="flex flex-wrap justify-between items-baseline gap-2"><span className="font-bold text-[12px]" style={{ color: primary, wordBreak: "break-word" }}>{edu.degree} — {edu.course}</span><span className="text-[10px] italic" style={{ color: "#888" }}>{formatDate(edu.startDate)} — {edu.current ? "Cursando" : formatDate(edu.endDate)}</span></div><div className="text-[11px] italic" style={{ color: "#666" }}>{edu.institution}</div></div>)}</div></ClassicSection>}
         {courses.length > 0 && <ClassicSection title="Cursos e Certificações" color={primary} accent={accent}><div className="space-y-2">{courses.map(c => <div key={c.id} className="flex flex-wrap justify-between items-baseline gap-2"><span className="text-[11px]" style={{ wordBreak: "break-word" }}><span className="font-bold" style={{ color: primary }}>{c.name}</span> — {c.institution}</span><span className="text-[10px] italic" style={{ color: "#888" }}>{[c.hours, c.year].filter(Boolean).join(" | ")}</span></div>)}</div></ClassicSection>}
         <div className="grid grid-cols-2 gap-8">
@@ -297,7 +297,7 @@ const TechTemplate = ({ data }: { data: ResumeData }) => {
         {personalInfo.objective && (
           <div style={{ marginTop: "16px", padding: "12px 16px", backgroundColor: "#0d1117", borderLeft: `3px solid ${neon}`, borderRadius: "0 4px 4px 0" }}>
             <span style={{ color: neon, fontSize: "10px" }}>{"/* "}</span>
-            <span style={{ color: dim, fontSize: "11px", fontStyle: "italic" }}>{personalInfo.objective}</span>
+            <span style={{ color: dim, fontSize: "11px", fontStyle: "italic", textAlign: "left", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>{personalInfo.objective}</span>
             <span style={{ color: neon, fontSize: "10px" }}>{" */"}</span>
           </div>
         )}
@@ -320,9 +320,9 @@ const TechTemplate = ({ data }: { data: ResumeData }) => {
                   </div>
                   <div style={{ color: dim, fontSize: "10px", marginBottom: "8px" }}>{exp.company}{exp.city ? ` · ${exp.city}` : ""}</div>
                   {exp.description && exp.description.split("\n").filter(Boolean).map((line, i) => (
-                    <div key={i} style={{ display: "flex", gap: "8px", fontSize: "10px", color: "#c9d1d9", marginBottom: "3px" }}>
+                    <div key={i} style={{ display: "flex", gap: "8px", fontSize: "10px", color: "#c9d1d9", marginBottom: "3px", textAlign: "left", wordSpacing: "1px" }}>
                       <span style={{ color: neon }}>-</span>
-                      <span>{line.replace(/^[-•]\s*/, "")}</span>
+                      <span style={{ whiteSpace: "pre-wrap" }}>{line.replace(/^[-•]\s*/, "")}</span>
                     </div>
                   ))}
                 </div>
@@ -424,7 +424,7 @@ const AcademicTemplate = ({ data }: { data: ResumeData }) => {
           </div>
         </div>
         {personalInfo.objective && (
-          <div style={{ marginTop: "16px", padding: "10px 16px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "4px", fontSize: "11px", fontStyle: "italic", lineHeight: "1.6" }}>
+          <div style={{ marginTop: "16px", padding: "10px 16px", backgroundColor: "rgba(255,255,255,0.1)", borderRadius: "4px", fontSize: "11px", fontStyle: "italic", lineHeight: "1.6", textAlign: "left", whiteSpace: "pre-wrap" }}>
             {personalInfo.objective}
           </div>
         )}
@@ -447,9 +447,9 @@ const AcademicTemplate = ({ data }: { data: ResumeData }) => {
                   </div>
                   <div style={{ fontSize: "11px", color: "#444", fontStyle: "italic", marginBottom: "4px" }}>{exp.company}{exp.city ? `, ${exp.city}` : ""}</div>
                   {exp.description && exp.description.split("\n").filter(Boolean).map((line, i) => (
-                    <div key={i} style={{ display: "flex", gap: "8px", fontSize: "11px", color: "#333", marginBottom: "2px" }}>
+                    <div key={i} style={{ display: "flex", gap: "8px", fontSize: "11px", color: "#333", marginBottom: "2px", textAlign: "left", wordSpacing: "1px" }}>
                       <span style={{ color: accent, fontWeight: "bold" }}>•</span>
-                      <span>{line.replace(/^[-•]\s*/, "")}</span>
+                      <span style={{ whiteSpace: "pre-wrap" }}>{line.replace(/^[-•]\s*/, "")}</span>
                     </div>
                   ))}
                 </div>
@@ -548,7 +548,7 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
           {personalInfo.linkedin && <span>🔗 {personalInfo.linkedin}</span>}
         </div>
         {personalInfo.objective && (
-          <p style={{ marginTop: "14px", fontSize: "11px", color: mid, fontStyle: "italic", maxWidth: "480px", margin: "14px auto 0", lineHeight: "1.7" }}>{personalInfo.objective}</p>
+          <p style={{ marginTop: "14px", fontSize: "11px", color: mid, fontStyle: "italic", maxWidth: "480px", margin: "14px auto 0", lineHeight: "1.7", textAlign: "left", whiteSpace: "pre-wrap", wordSpacing: "1px" }}>{personalInfo.objective}</p>
         )}
       </div>
 
@@ -567,9 +567,9 @@ const ElegantTemplate = ({ data }: { data: ResumeData }) => {
                   </div>
                   <div style={{ fontSize: "11px", color: rose, marginBottom: "4px" }}>{exp.company}{exp.city ? ` · ${exp.city}` : ""}</div>
                   {exp.description && exp.description.split("\n").filter(Boolean).map((line, i) => (
-                    <div key={i} style={{ display: "flex", gap: "8px", fontSize: "11px", color: "#444", marginBottom: "2px" }}>
+                    <div key={i} style={{ display: "flex", gap: "8px", fontSize: "11px", color: "#444", marginBottom: "2px", textAlign: "left", wordSpacing: "1px" }}>
                       <span style={{ color: rose }}>◦</span>
-                      <span>{line.replace(/^[-•]\s*/, "")}</span>
+                      <span style={{ whiteSpace: "pre-wrap" }}>{line.replace(/^[-•]\s*/, "")}</span>
                     </div>
                   ))}
                 </div>

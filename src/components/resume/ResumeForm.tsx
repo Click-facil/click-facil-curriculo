@@ -251,13 +251,21 @@ const ResumeForm = () => {
       const problematicTemplates: TemplateStyle[] = ["classic", "elegant", "academic", "tech"];
       const needsWhiteSpaceFix = problematicTemplates.includes(template);
       allElements.forEach((el) => {
-        el.style.fontKerning = "none";
-        el.style.textRendering = "geometricPrecision";
-        el.style.fontVariantLigatures = "none";
-        // Para templates com problema de espaçamento, aplicar whiteSpace fix
-        if (needsWhiteSpaceFix && (el.style.whiteSpace === "" || el.style.whiteSpace === "normal")) {
-          el.style.whiteSpace = "pre-wrap";
-          el.style.wordBreak = "break-word";
+        // Força a desativação de ligaturas e ajustes complexos de fonte
+        el.style.setProperty("font-kerning", "none", "important");
+        el.style.setProperty("text-rendering", "geometricPrecision", "important");
+        el.style.setProperty("font-variant-ligatures", "none", "important");
+        
+        // FIX DEFINITIVO: Força o alinhamento à esquerda no momento de gerar o PDF
+        el.style.setProperty("text-align", "left", "important");
+
+        // Para templates com problema de espaçamento, aplicar whiteSpace fix rigoroso
+        if (needsWhiteSpaceFix) {
+          el.style.setProperty("word-spacing", "2px", "important");
+          el.style.setProperty("letter-spacing", "0.2px", "important");
+          el.style.setProperty("white-space", "pre-wrap", "important");
+          el.style.setProperty("word-break", "keep-all", "important");
+          el.style.setProperty("overflow-wrap", "break-word", "important");
         }
       });
 
@@ -269,7 +277,7 @@ const ResumeForm = () => {
       let canvas: HTMLCanvasElement;
       try {
         canvas = await html2canvas(clone, {
-          scale: 2,
+          scale: 3,
           useCORS: true,
           allowTaint: false,
           backgroundColor: "#ffffff",
