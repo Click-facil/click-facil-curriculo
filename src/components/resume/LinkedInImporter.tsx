@@ -174,7 +174,7 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
       <Button 
         onClick={() => isPremium ? setIsOpen(true) : onUnlock()} 
         variant="outline"
-        className="gap-2"
+        className="gap-2 hidden"
         size="sm"
       >
         {!isPremium && <Lock className="h-4 w-4" />}
