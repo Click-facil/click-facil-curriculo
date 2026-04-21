@@ -369,16 +369,26 @@ const ResumeForm = () => {
       <header className="bg-hero text-primary-foreground py-6 shadow-elevated">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold font-display">
-                Click Fácil <span className="font-normal opacity-80">| Gerador de Currículo</span>
-              </h1>
-              <p className="text-sm opacity-70 mt-1">Crie seu currículo profissional em minutos</p>
+            <div className="flex items-center gap-2 md:gap-3">
+              <img 
+                src="/ponteiro_clickfacil.ico" 
+                alt="Click Fácil" 
+                className="w-8 h-8 md:w-10 md:h-10"
+              />
+              <div>
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold font-display">
+                  Click Fácil <span className="font-normal opacity-80 hidden sm:inline">| Gerador de Currículo</span>
+                </h1>
+                <p className="text-xs md:text-sm opacity-70 mt-1 hidden md:block">Crie seu currículo profissional em minutos</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               {lastSaved && (
-                <span className="text-xs opacity-50 hidden sm:flex items-center gap-1">
-                  <Save className="w-3 h-3" /> Salvo automaticamente
+                <span className="text-xs opacity-50 hidden sm:flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-green-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04Z" fill="currentColor"/>
+                  </svg>
+                  Salvo
                 </span>
               )}
               {user ? (
