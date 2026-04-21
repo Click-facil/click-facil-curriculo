@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Upload, Sparkles, Lock } from "lucide-react";
+import { Loader2, Upload, Sparkles, Lock, CheckCircle2, AlertCircle, HelpCircle } from "lucide-react";
 import { ResumeData } from "@/types/resume";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface LinkedInImporterProps {
   onImport: (data: Partial<ResumeData>) => void;
@@ -68,6 +69,8 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
   const [linkedinText, setLinkedinText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<any>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const extractData = async () => {
     const apiKey = import.meta.env.VITE_GROQ_API_KEY;
@@ -118,7 +121,28 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
       const jsonStr = jsonMatch ? jsonMatch[0] : content;
       const extracted = JSON.parse(jsonStr);
 
-      const resumeData: Partial<ResumeData> = {
+      // Gerar preview antes de importar
+      setPreview({
+        name: extracted.personalInfo?.fullName || "Não detectado",
+        objective: extracted.personalInfo?.objective || "Não detectado",
+        experienceCount: extracted.experience?.length || 0,
+        educationCount: extracted.education?.length || 0,
+        skillsCount: extracted.skills?.length || 0,
+        rawData: extracted, // Guardar dados para importação posterior
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao processar dados");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmImport = () => {
+    if (!preview?.rawData) return;
+
+    const extracted = preview.rawData;
+
+    const resumeData: Partial<ResumeData> = {
         personalInfo: {
           fullName: extracted.personalInfo?.fullName || "",
           email: "",
@@ -159,14 +183,16 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
         })),
       };
 
-      onImport(resumeData);
-      setIsOpen(false);
-      setLinkedinText("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao processar dados");
-    } finally {
-      setLoading(false);
-    }
+    onImport(resumeData);
+    setIsOpen(false);
+    setLinkedinText("");
+    setPreview(null);
+  };
+
+  const handleTextChange = (text: string) => {
+    setLinkedinText(text);
+    setError(null);
+    setPreview(null);
   };
 
   return (
@@ -174,7 +200,7 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
       <Button 
         onClick={() => isPremium ? setIsOpen(true) : onUnlock()} 
         variant="outline"
-        className="gap-2 hidden"
+        className="gap-2"
         size="sm"
       >
         {!isPremium && <Lock className="h-4 w-4" />}
@@ -184,7 +210,15 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
         {!isPremium && <span className="text-xs opacity-70 ml-1 hidden md:inline">Premium</span>}
       </Button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          setLinkedinText("");
+          setError(null);
+          setPreview(null);
+          setShowTutorial(false);
+        }
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -192,19 +226,128 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
               Importar Perfil do LinkedIn
             </DialogTitle>
             <DialogDescription>
-              Cole o texto do seu perfil LinkedIn completo. A IA irá extrair automaticamente
-              suas informações profissionais.
+              Cole todo o texto do seu perfil LinkedIn. A IA irá extrair automaticamente suas informações.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <Textarea
-              placeholder="Cole aqui todo o texto do seu perfil LinkedIn (nome, cargo, experiências, formação, habilidades...)&#10;&#10;Exemplo:&#10;João Silva&#10;Desenvolvedor Full Stack | React | Node.js&#10;&#10;Experiência:&#10;Empresa XYZ - Desenvolvedor Senior&#10;Jan 2020 - Presente&#10;..."
-              value={linkedinText}
-              onChange={(e) => setLinkedinText(e.target.value)}
-              className="min-h-[300px] font-mono text-sm"
-              disabled={loading}
-            />
+            {/* Tutorial colapsável */}
+            <Collapsible open={showTutorial} onOpenChange={setShowTutorial}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground">
+                  <HelpCircle className="h-4 w-4" />
+                  {showTutorial ? "Ocultar tutorial" : "Como copiar meu perfil do LinkedIn?"}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 pt-3">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3 text-sm">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">1</div>
+                    <div>
+                      <p className="font-medium">Abra seu perfil no LinkedIn</p>
+                      <p className="text-muted-foreground text-xs mt-1">Acesse linkedin.com/in/seu-perfil</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">2</div>
+                    <div>
+                      <p className="font-medium">Selecione todo o conteúdo</p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Pressione <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Ctrl+A</kbd> (Windows) ou <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Cmd+A</kbd> (Mac)
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">3</div>
+                    <div>
+                      <p className="font-medium">Copie o texto</p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Pressione <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Ctrl+C</kbd> (Windows) ou <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Cmd+C</kbd> (Mac)
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">4</div>
+                    <div>
+                      <p className="font-medium">Cole aqui embaixo</p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        Pressione <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Ctrl+V</kbd> no campo abaixo
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+            <div className="relative">
+              <Textarea
+                placeholder="Cole aqui todo o texto do seu perfil LinkedIn...&#10;&#10;Exemplo:&#10;João Silva&#10;Desenvolvedor Full Stack | React | Node.js&#10;&#10;Sobre&#10;Profissional com 5 anos de experiência...&#10;&#10;Experiência&#10;Empresa XYZ - Desenvolvedor Senior&#10;jan de 2020 - Presente (3 anos)&#10;São Paulo, Brasil&#10;- Desenvolvimento de aplicações web...&#10;&#10;Formação acadêmica&#10;Universidade Federal - Ciência da Computação&#10;2015 - 2019&#10;&#10;Competências&#10;JavaScript • React • Node.js • TypeScript..."
+                value={linkedinText}
+                onChange={(e) => handleTextChange(e.target.value)}
+                className="min-h-[280px] font-mono text-sm resize-none"
+                disabled={loading}
+              />
+              {linkedinText.length > 0 && (
+                <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+                  {linkedinText.length} caracteres
+                </div>
+              )}
+            </div>
+
+            {/* Validação em tempo real */}
+            {linkedinText.length > 0 && linkedinText.length < 50 && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Cole um texto mais completo do seu perfil (mínimo 50 caracteres)
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {linkedinText.length >= 50 && !preview && !loading && (
+              <Alert className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <AlertDescription className="text-green-800 dark:text-green-200">
+                  Texto detectado! Clique em "Analisar Dados" para continuar.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Preview dos dados extraídos */}
+            {preview && (
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  Dados detectados:
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">Nome</p>
+                    <p className="font-medium truncate">{preview.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Objetivo</p>
+                    <p className="font-medium truncate">{preview.objective}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Experiências</p>
+                    <p className="font-medium">{preview.experienceCount} encontrada(s)</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Formações</p>
+                    <p className="font-medium">{preview.educationCount} encontrada(s)</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Habilidades</p>
+                    <p className="font-medium">{preview.skillsCount} encontrada(s)</p>
+                  </div>
+                </div>
+                <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
+                  <AlertDescription className="text-blue-800 dark:text-blue-200 text-xs">
+                    ✨ Revise os dados detectados e clique em "Confirmar Importação" para preencher seu currículo automaticamente.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
 
             {error && (
               <Alert variant="destructive">
@@ -220,19 +363,29 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
               >
                 Cancelar
               </Button>
-              <Button onClick={extractData} disabled={loading || linkedinText.length < 50}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Importar Dados
-                  </>
-                )}
-              </Button>
+              {!preview ? (
+                <Button 
+                  onClick={extractData} 
+                  disabled={loading || linkedinText.length < 50}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Analisando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Analisar Dados
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button onClick={confirmImport} className="bg-green-600 hover:bg-green-700">
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Confirmar Importação
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>
