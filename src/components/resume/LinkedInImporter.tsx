@@ -89,6 +89,8 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
     setError(null);
 
     try {
+      console.log('Iniciando extração com Groq API...');
+      
       const response = await fetch(GROQ_API_URL, {
         method: "POST",
         headers: {
@@ -96,7 +98,7 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "llama-3.1-70b-versatile",
+          model: "llama-3.1-8b-instant",
           messages: [
             {
               role: "user",
@@ -109,7 +111,19 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
       });
 
       if (!response.ok) {
-        throw new Error("Erro ao processar dados. Tente novamente.");
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erro da API Groq:', errorData);
+        
+        // Mensagens de erro mais específicas
+        if (response.status === 401) {
+          throw new Error("Chave da API inválida. Verifique a configuração.");
+        } else if (response.status === 429) {
+          throw new Error("Limite de requisições atingido. Tente novamente em alguns minutos.");
+        } else if (response.status === 400) {
+          throw new Error("Erro na requisição. Verifique se o texto está correto.");
+        }
+        
+        throw new Error(errorData?.error?.message || "Erro ao processar dados. Tente novamente.");
       }
 
       const data = await response.json();
