@@ -233,14 +233,14 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
           setShowTutorial(false);
         }
       }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
               Importar Perfil do LinkedIn
             </DialogTitle>
             <DialogDescription>
-              Cole todo o texto do seu perfil LinkedIn. A IA irá extrair automaticamente suas informações.
+              Cole o texto completo do seu perfil do LinkedIn. Nossa IA vai ler e preencher seu currículo automaticamente.
             </DialogDescription>
           </DialogHeader>
 
@@ -259,33 +259,48 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
                     <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">1</div>
                     <div>
                       <p className="font-medium">Abra seu perfil no LinkedIn</p>
-                      <p className="text-muted-foreground text-xs mt-1">Acesse linkedin.com/in/seu-perfil</p>
+                      <p className="text-muted-foreground text-xs mt-1">Entre no site linkedin.com e clique no seu perfil</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">2</div>
                     <div>
-                      <p className="font-medium">Selecione todo o conteúdo</p>
+                      <p className="font-medium">Selecione TUDO da página</p>
                       <p className="text-muted-foreground text-xs mt-1">
-                        Pressione <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Ctrl+A</kbd> (Windows) ou <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Cmd+A</kbd> (Mac)
+                        Clique em qualquer lugar da página e pressione:
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        • <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs font-semibold">Ctrl+A</kbd> no Windows<br/>
+                        • <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs font-semibold">Cmd+A</kbd> no Mac<br/>
+                        • No celular: segure o dedo na tela e escolha "Selecionar tudo"
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">3</div>
                     <div>
-                      <p className="font-medium">Copie o texto</p>
+                      <p className="font-medium">Copie o texto selecionado</p>
                       <p className="text-muted-foreground text-xs mt-1">
-                        Pressione <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Ctrl+C</kbd> (Windows) ou <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Cmd+C</kbd> (Mac)
+                        Pressione:
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        • <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs font-semibold">Ctrl+C</kbd> no Windows<br/>
+                        • <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs font-semibold">Cmd+C</kbd> no Mac<br/>
+                        • No celular: toque em "Copiar"
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 font-semibold text-xs">4</div>
                     <div>
-                      <p className="font-medium">Cole aqui embaixo</p>
+                      <p className="font-medium">Cole no campo abaixo</p>
                       <p className="text-muted-foreground text-xs mt-1">
-                        Pressione <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs">Ctrl+V</kbd> no campo abaixo
+                        Clique no campo de texto abaixo e pressione:
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-1">
+                        • <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs font-semibold">Ctrl+V</kbd> no Windows<br/>
+                        • <kbd className="px-1.5 py-0.5 bg-background border rounded text-xs font-semibold">Cmd+V</kbd> no Mac<br/>
+                        • No celular: segure o dedo no campo e toque em "Colar"
                       </p>
                     </div>
                   </div>
@@ -297,7 +312,7 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
                 placeholder="Cole aqui todo o texto do seu perfil LinkedIn...&#10;&#10;Exemplo:&#10;João Silva&#10;Desenvolvedor Full Stack | React | Node.js&#10;&#10;Sobre&#10;Profissional com 5 anos de experiência...&#10;&#10;Experiência&#10;Empresa XYZ - Desenvolvedor Senior&#10;jan de 2020 - Presente (3 anos)&#10;São Paulo, Brasil&#10;- Desenvolvimento de aplicações web...&#10;&#10;Formação acadêmica&#10;Universidade Federal - Ciência da Computação&#10;2015 - 2019&#10;&#10;Competências&#10;JavaScript • React • Node.js • TypeScript..."
                 value={linkedinText}
                 onChange={(e) => handleTextChange(e.target.value)}
-                className="min-h-[280px] font-mono text-sm resize-none"
+                className="min-h-[200px] md:min-h-[280px] font-mono text-sm resize-none"
                 disabled={loading}
               />
               {linkedinText.length > 0 && (
@@ -328,12 +343,12 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
 
             {/* Preview dos dados extraídos */}
             {preview && (
-              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <div className="bg-muted/50 rounded-lg p-3 md:p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   Dados detectados:
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-muted-foreground text-xs">Nome</p>
                     <p className="font-medium truncate">{preview.name}</p>
@@ -350,14 +365,14 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
                     <p className="text-muted-foreground text-xs">Formações</p>
                     <p className="font-medium">{preview.educationCount} encontrada(s)</p>
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <p className="text-muted-foreground text-xs">Habilidades</p>
                     <p className="font-medium">{preview.skillsCount} encontrada(s)</p>
                   </div>
                 </div>
                 <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
                   <AlertDescription className="text-blue-800 dark:text-blue-200 text-xs">
-                    ✨ Revise os dados detectados e clique em "Confirmar Importação" para preencher seu currículo automaticamente.
+                    ✨ Confira se os dados estão corretos e clique em "Confirmar Importação" abaixo para preencher automaticamente.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -369,11 +384,12 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
               </Alert>
             )}
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex flex-col sm:flex-row gap-2 justify-end pt-2">
               <Button
                 variant="outline"
                 onClick={() => setIsOpen(false)}
                 disabled={loading}
+                className="w-full sm:w-auto"
               >
                 Cancelar
               </Button>
@@ -381,6 +397,7 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
                 <Button 
                   onClick={extractData} 
                   disabled={loading || linkedinText.length < 50}
+                  className="w-full sm:w-auto"
                 >
                   {loading ? (
                     <>
@@ -395,7 +412,10 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
                   )}
                 </Button>
               ) : (
-                <Button onClick={confirmImport} className="bg-green-600 hover:bg-green-700">
+                <Button 
+                  onClick={confirmImport} 
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                >
                   <CheckCircle2 className="mr-2 h-4 w-4" />
                   Confirmar Importação
                 </Button>
