@@ -23,11 +23,6 @@ const PersonalInfoStep = ({ data, onChange }: Props) => {
 
   return (
     <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold font-display text-foreground">Dados Pessoais</h2>
-        <p className="text-muted-foreground mt-1">Informações básicas para o cabeçalho do currículo</p>
-      </div>
-
       <div className="flex justify-center">
         <PhotoUpload
           photo={data.photo}

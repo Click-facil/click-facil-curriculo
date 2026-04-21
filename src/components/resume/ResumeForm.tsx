@@ -18,6 +18,7 @@ import AuthModal from "./AuthModal";
 import CheckoutModal from "./CheckoutModal";
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import { ATSAnalyzer } from "./ATSAnalyzer";
+import { LinkedInImporter } from "./LinkedInImporter";
 import { toast } from "sonner";
 // import { exportToDocx } from "@/lib/docx-export";
 import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
@@ -423,7 +424,33 @@ const ResumeForm = () => {
             <div className={showPreview ? "lg:w-1/2" : "w-full"}>
               <StepIndicator steps={STEPS} currentStep={step} />
               <div className="bg-card rounded-xl shadow-card p-6 md:p-8 border border-border">
-                {step === 0 && <PersonalInfoStep data={data.personalInfo} onChange={(personalInfo) => setData({ ...data, personalInfo })} />}
+                {step === 0 && (
+                  <>
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold font-display text-foreground">Dados Pessoais</h2>
+                        <p className="text-muted-foreground mt-1">Informações básicas para o cabeçalho do currículo</p>
+                      </div>
+                      <LinkedInImporter
+                        onImport={(importedData) => {
+                          setData({ ...data, ...importedData });
+                          toast.success("Dados importados do LinkedIn com sucesso!");
+                        }}
+                        isPremium={isPremium || isAdmin}
+                        onUnlock={() => {
+                          if (!user) {
+                            setPendingAction("linkedin-import");
+                            setShowAuth(true);
+                          } else {
+                            setPendingAction("linkedin-import");
+                            setShowCheckout(true);
+                          }
+                        }}
+                      />
+                    </div>
+                    <PersonalInfoStep data={data.personalInfo} onChange={(personalInfo) => setData({ ...data, personalInfo })} />
+                  </>
+                )}
                 {step === 1 && <EducationStep data={data.education} onChange={(education) => setData({ ...data, education })} />}
                 {step === 2 && <ExperienceStep data={data.experience} onChange={(experience) => setData({ ...data, experience })} />}
                 {step === 3 && <CoursesStep data={data.courses} onChange={(courses) => setData({ ...data, courses })} />}
