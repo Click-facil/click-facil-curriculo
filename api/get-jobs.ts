@@ -18,7 +18,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const url = `https://api.adzuna.com/v1/api/jobs/br/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=3&what=${encodeURIComponent(role)}&sort_by=date`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': 'https://www.adzuna.com.br/',
+        'Origin': 'https://www.adzuna.com.br',
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -42,8 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       salary: job.salary_max ? `R$ ${Math.round(job.salary_max)}` : null,
     }));
 
-    // Cache de 1 hora
-    res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate');
+    // Cache de 6 horas para reduzir requisições
+    res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate');
     return res.status(200).json(jobs);
   } catch (error) {
     console.error('Erro na integração Adzuna:', error);
