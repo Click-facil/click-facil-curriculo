@@ -74,17 +74,16 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
 
   return (
     <div className="mt-8 p-6 bg-gradient-to-br from-card to-muted/30 rounded-xl border border-border shadow-lg">
-      {/* Header com animação */}
+      {/* Header com ícone */}
       <div className="flex items-center gap-3 mb-6">
-        {/* SVG Animado - Vagas Pulsando */}
-        <div className="relative w-10 h-10 flex-shrink-0">
-          <svg viewBox="0 0 40 40" className="w-full h-full">
-            {/* Círculo externo pulsante */}
-            <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary/20 animate-ping" />
-            <circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-primary/40" style={{ animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite', animationDelay: '0.3s' }} />
-            {/* Ícone central */}
-            <circle cx="20" cy="20" r="10" fill="currentColor" className="text-primary" />
-            <path d="M16 18h8M16 22h8M14 14h12v12H14z" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        {/* SVG Simples - Ícone de Vagas */}
+        <div className="w-10 h-10 flex-shrink-0 text-primary">
+          <svg viewBox="0 0 40 40" className="w-full h-full" fill="currentColor">
+            <rect x="8" y="12" width="24" height="20" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/>
+            <rect x="12" y="8" width="16" height="4" rx="1" fill="currentColor"/>
+            <line x1="14" y1="18" x2="26" y2="18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="14" y1="23" x2="26" y2="23" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <line x1="14" y1="28" x2="22" y2="28" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         </div>
         
@@ -97,13 +96,14 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
         </div>
       </div>
       
-      {/* Scroll horizontal de vagas */}
+      {/* Scroll - horizontal mobile, vertical desktop */}
       <div className="relative">
-        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40">
+        {/* Mobile: scroll horizontal */}
+        <div className="md:hidden flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40">
           {jobs.map((job) => (
             <div 
               key={job.id} 
-              className="flex-shrink-0 w-[280px] md:w-[320px] bg-card p-5 rounded-lg border border-border hover:border-primary/50 hover:shadow-md transition-all snap-start group"
+              className="flex-shrink-0 w-[280px] bg-card p-5 rounded-lg border border-border hover:border-primary/50 hover:shadow-md transition-all snap-start group"
             >
               <div className="flex items-start gap-2 mb-3">
                 <Briefcase className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
@@ -141,12 +141,49 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
           ))}
         </div>
         
-        {/* Indicador de scroll (apenas mobile) */}
-        <div className="md:hidden flex justify-center gap-1 mt-2">
-          {jobs.map((_, idx) => (
-            <div key={idx} className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+        {/* Desktop: scroll vertical */}
+        <div className="hidden md:block max-h-[400px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40">
+          {jobs.map((job) => (
+            <div 
+              key={job.id} 
+              className="bg-card p-5 rounded-lg border border-border hover:border-primary/50 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-start gap-2 mb-3">
+                <Briefcase className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                <h4 className="text-foreground font-semibold text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors" title={job.title}>
+                  {job.title}
+                </h4>
+              </div>
+              
+              <p className="text-muted-foreground text-sm font-medium mb-2 truncate">
+                {job.company}
+              </p>
+              
+              <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-3">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{job.location}</span>
+              </div>
+
+              {job.salary && (
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded px-2 py-1 mb-3">
+                  <p className="text-green-700 dark:text-green-400 text-xs font-semibold">
+                    Até {job.salary}
+                  </p>
+                </div>
+              )}
+              
+              <a
+                href={job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-primary text-sm font-medium hover:underline mt-2"
+              >
+                Ver detalhes <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           ))}
         </div>
+
       </div>
 
       {/* CTA Premium */}
