@@ -19,6 +19,7 @@ import CheckoutModal from "./CheckoutModal";
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import { ATSAnalyzer } from "./ATSAnalyzer";
 import { LinkedInImporter } from "./LinkedInImporter";
+import { JobRecommendations } from "./JobRecommendations";
 import { toast } from "sonner";
 // import { exportToDocx } from "@/lib/docx-export";
 import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
@@ -618,7 +619,7 @@ const ResumeForm = () => {
               )}
             </div>
 
-            {/* Mobile: prévia → ATS → carta → limpar */}
+            {/* Mobile: prévia → ATS → vagas → carta → limpar */}
             <div className="block xl:hidden space-y-6">
               <div className="w-full overflow-hidden" style={{ height: "505px" }}>
                 <div
@@ -633,6 +634,17 @@ const ResumeForm = () => {
                 </div>
               </div>
               <ATSAnalyzer data={data} />
+              <JobRecommendations 
+                userObjective={data.personalInfo.objective}
+                isPremium={isPremium || isAdmin}
+                onUpgrade={() => {
+                  if (!user) {
+                    setShowAuth(true);
+                  } else {
+                    setShowCheckout(true);
+                  }
+                }}
+              />
               <CoverLetterGenerator
                 data={data}
                 isPremium={isPremium}
@@ -646,10 +658,21 @@ const ResumeForm = () => {
               </div>
             </div>
 
-            {/* Desktop: coluna lateral esquerda (ATS + carta + limpar) | coluna direita (prévia) */}
+            {/* Desktop: coluna lateral esquerda (ATS + vagas + carta + limpar) | coluna direita (prévia) */}
             <div className="hidden xl:flex flex-row gap-6 items-start pb-8">
               <div className="w-72 flex-shrink-0 space-y-4">
                 <ATSAnalyzer data={data} />
+                <JobRecommendations 
+                  userObjective={data.personalInfo.objective}
+                  isPremium={isPremium || isAdmin}
+                  onUpgrade={() => {
+                    if (!user) {
+                      setShowAuth(true);
+                    } else {
+                      setShowCheckout(true);
+                    }
+                  }}
+                />
                 <CoverLetterGenerator
                   data={data}
                   isPremium={isPremium}

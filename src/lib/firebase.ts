@@ -17,7 +17,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-const firebaseConfig = {
+// Configuração de PRODUÇÃO
+const firebaseConfigProd = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -26,6 +27,24 @@ const firebaseConfig = {
   appId:             import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
+
+// Configuração de DESENVOLVIMENTO (localhost)
+const firebaseConfigDev = {
+  apiKey:            import.meta.env.VITE_FIREBASE_DEV_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_DEV_AUTH_DOMAIN || import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_DEV_PROJECT_ID || import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_DEV_STORAGE_BUCKET || import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_DEV_MESSAGING_SENDER_ID || import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_DEV_APP_ID || import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId:     import.meta.env.VITE_FIREBASE_DEV_MEASUREMENT_ID || import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+};
+
+// Detecta se está em localhost
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+// Usa config de DEV no localhost, PROD em produção
+const firebaseConfig = isLocalhost ? firebaseConfigDev : firebaseConfigProd;
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
