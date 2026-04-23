@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ message: 'Parâmetro "role" é obrigatório' });
   }
 
-  const appId = process.env.ADZUNA_APP_ID || '59c8975f';
+  const appId = process.env.ADZUNA_APP_ID || 'dd514507';
   const appKey = process.env.ADZUNA_APP_KEY || '46aed95d15d587a6d91c65ea';
 
   try {
