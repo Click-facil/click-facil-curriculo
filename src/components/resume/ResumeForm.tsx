@@ -634,23 +634,22 @@ const ResumeForm = () => {
                 </div>
               </div>
               <ATSAnalyzer data={data} />
+              <CoverLetterGenerator
+                data={data}
+                isPremium={isPremium}
+                isAdmin={isAdmin}
+                onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+              />
               <JobRecommendations 
                 userObjective={data.personalInfo.objective}
                 isPremium={isPremium || isAdmin}
                 onUpgrade={() => {
-                  console.log('JobRecommendations: onUpgrade chamado');
                   if (!user) {
                     setShowAuth(true);
                   } else {
                     setShowCheckout(true);
                   }
                 }}
-              />
-              <CoverLetterGenerator
-                data={data}
-                isPremium={isPremium}
-                isAdmin={isAdmin}
-                onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
               />
               <div className="flex justify-end pb-4">
                 <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
@@ -663,6 +662,12 @@ const ResumeForm = () => {
             <div className="hidden xl:flex flex-row gap-6 items-start pb-8">
               <div className="w-72 flex-shrink-0 space-y-4">
                 <ATSAnalyzer data={data} />
+                <CoverLetterGenerator
+                  data={data}
+                  isPremium={isPremium}
+                  isAdmin={isAdmin}
+                  onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+                />
                 <JobRecommendations 
                   userObjective={data.personalInfo.objective}
                   isPremium={isPremium || isAdmin}
@@ -673,12 +678,6 @@ const ResumeForm = () => {
                       setShowCheckout(true);
                     }
                   }}
-                />
-                <CoverLetterGenerator
-                  data={data}
-                  isPremium={isPremium}
-                  isAdmin={isAdmin}
-                  onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
                 />
                 <div className="flex justify-end">
                   <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">

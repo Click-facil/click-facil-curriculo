@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Briefcase, MapPin, TrendingUp, ExternalLink, Sparkles } from "lucide-react";
+import { Briefcase, MapPin, ExternalLink, Sparkles, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -56,15 +56,11 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
   if (loading) {
     return (
       <div className="mt-8 p-6 bg-card rounded-xl border border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <Skeleton className="h-6 w-6 rounded" />
+        <div className="flex items-center gap-3 mb-4">
+          <Skeleton className="h-10 w-10 rounded" />
           <Skeleton className="h-6 w-48" />
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 rounded-lg" />
-          ))}
-        </div>
+        <Skeleton className="h-48 rounded-lg" />
       </div>
     );
   }
@@ -73,75 +69,111 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
     return null;
   }
 
+  // Extrai palavra-chave principal do objetivo
+  const mainKeyword = userObjective.split(' ').slice(0, 3).join(' ');
+
   return (
-    <div className="mt-8 p-6 bg-card rounded-xl border border-border shadow-card">
-      <div className="flex items-center gap-2 mb-4">
-        <TrendingUp className="w-5 h-5 text-primary" />
-        <h3 className="text-xl font-semibold text-foreground">
-          Vagas em alta para {userObjective}
-        </h3>
+    <div className="mt-8 p-6 bg-gradient-to-br from-card to-muted/30 rounded-xl border border-border shadow-lg">
+      {/* Header com animação */}
+      <div className="flex items-center gap-3 mb-6">
+        {/* SVG Animado - Vagas Pulsando */}
+        <div className="relative w-10 h-10 flex-shrink-0">
+          <svg viewBox="0 0 40 40" className="w-full h-full">
+            {/* Círculo externo pulsante */}
+            <circle cx="20" cy="20" r="18" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary/20 animate-ping" />
+            <circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-primary/40" style={{ animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite', animationDelay: '0.3s' }} />
+            {/* Ícone central */}
+            <circle cx="20" cy="20" r="10" fill="currentColor" className="text-primary" />
+            <path d="M16 18h8M16 22h8M14 14h12v12H14z" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+          </svg>
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary flex-shrink-0" />
+            <span className="truncate">Vagas em alta</span>
+          </h3>
+          <p className="text-sm text-muted-foreground truncate">{mainKeyword}</p>
+        </div>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-3">
-        {jobs.map((job) => (
-          <div 
-            key={job.id} 
-            className="bg-muted/50 p-4 rounded-lg border border-border hover:border-primary/50 transition-all group"
-          >
-            <div className="flex items-start gap-2 mb-2">
-              <Briefcase className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <h4 className="text-foreground font-medium line-clamp-2 group-hover:text-primary transition-colors" title={job.title}>
-                {job.title}
-              </h4>
-            </div>
-            
-            <p className="text-muted-foreground text-sm mb-1 truncate">
-              {job.company}
-            </p>
-            
-            <div className="flex items-center gap-1 text-muted-foreground text-xs mb-3">
-              <MapPin className="w-3 h-3" />
-              <span className="truncate">{job.location}</span>
-            </div>
-
-            {job.salary && (
-              <p className="text-green-600 dark:text-green-400 text-sm font-semibold mb-3">
-                Até {job.salary}
-              </p>
-            )}
-            
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary text-sm font-medium hover:underline"
+      {/* Scroll horizontal de vagas */}
+      <div className="relative">
+        <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40">
+          {jobs.map((job) => (
+            <div 
+              key={job.id} 
+              className="flex-shrink-0 w-[280px] md:w-[320px] bg-card p-5 rounded-lg border border-border hover:border-primary/50 hover:shadow-md transition-all snap-start group"
             >
-              Ver vaga <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-        ))}
+              <div className="flex items-start gap-2 mb-3">
+                <Briefcase className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                <h4 className="text-foreground font-semibold text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors" title={job.title}>
+                  {job.title}
+                </h4>
+              </div>
+              
+              <p className="text-muted-foreground text-sm font-medium mb-2 truncate">
+                {job.company}
+              </p>
+              
+              <div className="flex items-center gap-1.5 text-muted-foreground text-xs mb-3">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{job.location}</span>
+              </div>
+
+              {job.salary && (
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded px-2 py-1 mb-3">
+                  <p className="text-green-700 dark:text-green-400 text-xs font-semibold">
+                    Até {job.salary}
+                  </p>
+                </div>
+              )}
+              
+              <a
+                href={job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-primary text-sm font-medium hover:underline mt-2"
+              >
+                Ver detalhes <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          ))}
+        </div>
+        
+        {/* Indicador de scroll (apenas mobile) */}
+        <div className="md:hidden flex justify-center gap-1 mt-2">
+          {jobs.map((_, idx) => (
+            <div key={idx} className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+          ))}
+        </div>
       </div>
 
       {/* CTA Premium */}
       {!isPremium && (
-        <div className="mt-6 text-center border-t border-border pt-6">
+        <div className="mt-6 pt-6 border-t border-border">
           <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-              <p className="text-foreground font-semibold">
-                Quer se destacar para essas empresas?
-              </p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <p className="text-foreground font-semibold text-sm">
+                    Destaque-se para essas empresas
+                  </p>
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Templates premium + Carta por IA = Aprovação garantida
+                </p>
+              </div>
+              <Button 
+                onClick={onUpgrade}
+                size="sm"
+                className="bg-amber-500 hover:bg-amber-600 text-white whitespace-nowrap"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                Premium R$ 9,90
+              </Button>
             </div>
-            <p className="text-muted-foreground text-sm mb-4">
-              Templates premium + Carta de apresentação por IA = Currículo que passa no filtro dos recrutadores
-            </p>
-            <Button 
-              onClick={onUpgrade}
-              className="bg-amber-500 hover:bg-amber-600 text-white"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Desbloquear Premium por R$ 9,90
-            </Button>
           </div>
         </div>
       )}
