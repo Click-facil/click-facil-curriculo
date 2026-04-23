@@ -638,6 +638,7 @@ const ResumeForm = () => {
                 userObjective={data.personalInfo.objective}
                 isPremium={isPremium || isAdmin}
                 onUpgrade={() => {
+                  console.log('JobRecommendations: onUpgrade chamado');
                   if (!user) {
                     setShowAuth(true);
                   } else {

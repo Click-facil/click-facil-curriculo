@@ -26,27 +26,24 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
   useEffect(() => {
     const fetchJobs = async () => {
       if (!userObjective || userObjective.length < 3) {
-        console.log('JobRecommendations: Objetivo muito curto ou vazio:', userObjective);
         setLoading(false);
         return;
       }
 
       try {
-        console.log('JobRecommendations: Buscando vagas para:', userObjective);
         setLoading(true);
         setError(false);
 
-        const response = await fetch(`/api/get-jobs?role=${encodeURIComponent(userObjective)}`);
+        const searchTerm = userObjective.split(' ').slice(0, 5).join(' ');
+        const response = await fetch(`/api/get-jobs?role=${encodeURIComponent(searchTerm)}`);
         
-        console.log('JobRecommendations: Status da resposta:', response.status);
-        
-        if (!response.ok) throw new Error('Erro ao buscar vagas');
+        if (!response.ok) {
+          throw new Error('Erro ao buscar vagas');
+        }
 
         const data = await response.json();
-        console.log('JobRecommendations: Vagas recebidas:', data);
         setJobs(data);
       } catch (err) {
-        console.error("JobRecommendations: Erro ao buscar vagas:", err);
         setError(true);
       } finally {
         setLoading(false);
@@ -72,7 +69,9 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
     );
   }
 
-  if (error || jobs.length === 0) return null;
+  if (error || jobs.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mt-8 p-6 bg-card rounded-xl border border-border shadow-card">
