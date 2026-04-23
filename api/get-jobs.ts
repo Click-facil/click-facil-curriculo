@@ -21,10 +21,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const response = await fetch(url);
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Adzuna API error:', response.status, errorText);
       throw new Error(`Adzuna API error: ${response.status}`);
     }
 
     const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      return res.status(200).json([]);
+    }
 
     // Mapear para formato limpo
     const jobs = data.results.map((job: any) => ({
