@@ -1,7 +1,57 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { spend } from "../src/lib/credits";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
 const GROQ_API_KEY = process.env.VITE_GROQ_API_KEY || "";
+
+// Inicializa Firebase Admin
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+    }),
+  });
+}
+
+const db = getFirestore();
+
+const CREDIT_COSTS = {
+  IMPROVE_AI: 1,
+} as const;
+
+async function spendCredits(uid: string): Promise<boolean> {
+  const ref = db.collection("users").doc(uid);
+  
+  try {
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.data() ?? {};
+
+      // Usuários premium/legacy têm créditos ilimitados
+      if (data.legacy_premium || data.premium) return true;
+
+      const current: number = data.credits ?? 0;
+      const cost = CREDIT_COSTS.IMPROVE_AI;
+      
+      if (current < cost) return false;
+
+      tx.update(ref, {
+        credits: current - cost,
+        lastUsedAt: new Date(),
+        usage_IMPROVE_AI: (data.usage_IMPROVE_AI ?? 0) + 1,
+      });
+      
+      return true;
+    });
+    
+    return result;
+  } catch (e) {
+    console.error("spend error:", e);
+    return false;
+  }
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -16,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // Gasta 1 crédito antes de melhorar
-    const success = await spend(uid, "IMPROVE_AI");
+    const success = await spendCredits(uid);
     if (!success) {
       return res.status(402).json({ error: "Créditos insuficientes" });
     }
