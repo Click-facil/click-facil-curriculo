@@ -15,15 +15,16 @@ import SkillsStep from "./SkillsStep";
 import ResumePreview from "./ResumePreview";
 import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
-import { useCredits } from "@/hooks/useCredits";
-import CreditsModal from "./CreditsModal";
+import CheckoutModal from "./CheckoutModal";
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import { ATSAnalyzer } from "./ATSAnalyzer";
 import { LinkedInImporter } from "./LinkedInImporter";
 import { JobRecommendations } from "./JobRecommendations";
 import { toast } from "sonner";
 // import { exportToDocx } from "@/lib/docx-export";
-import { auth, onAuthChange, logout, checkPremium, grantPremium } from "@/lib/firebase";
+import { auth, onAuthChange, logout, checkPremium, grantPremium, addCredits } from "@/lib/firebase";
+import { useCredits } from "@/hooks/useCredits";
+import CreditsModal from "./CreditsModal";
 import type { User as FirebaseUser } from "firebase/auth";
 import {
   trackStepCompleted,
@@ -71,9 +72,11 @@ const ResumeForm = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
-  const { credits, spend, isTemplateUnlocked } = useCredits(uid);
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+
+  // Hook de créditos
+  const { credits, spend, unlockTemplate, isTemplateUnlocked } = useCredits(uid);
 
   useEffect(() => {
     const unsub = onAuthChange(async (u) => {
@@ -126,12 +129,12 @@ const ResumeForm = () => {
     if (!PREMIUM_TEMPLATES.includes(t)) return true;
     if (isAdmin) return true;
     if (isPremium) return true;
+    if (isTemplateUnlocked(t)) return true;
     return false;
-  }, [isAdmin, isPremium]);
+  }, [isAdmin, isPremium, isTemplateUnlocked]);
 
   const requireAccessForDownload = (action: string): boolean => {
     if (!user) { setPendingAction(action); setShowAuth(true); return false; }
-    if (!isPremium && !isAdmin) { setPendingAction(action); setShowCheckout(true); return false; }
     return true;
   };
 
@@ -144,14 +147,14 @@ const ResumeForm = () => {
     if (admin) { setIsPremium(true); executePendingAction(); return; }
     const premium = await checkPremium(currentUser.uid);
     setIsPremium(premium);
-    if (!premium) { setShowCheckout(true); } else { executePendingAction(); }
+    // No novo modelo, usuário autenticado já tem créditos — executa ação pendente
+    executePendingAction();
   };
 
   const handleCheckoutSuccess = () => {
     setShowCheckout(false);
-    setIsPremium(true);
-    trackPremiumPurchased();
-    toast.success("🎉 Acesso premium liberado!");
+    setShowCreditsModal(false);
+    toast.success("🎉 Créditos adicionados com sucesso!");
     executePendingAction();
   };
 
@@ -163,16 +166,12 @@ const ResumeForm = () => {
   };
 
   const handleSelectTemplate = async (t: TemplateStyle) => {
-    if (isTemplateUnlocked(t)) {
-      setTemplate(t);
-      return;
-    }
-    const ok = await spend("UNLOCK_TEMPLATE", { template: t });
-    if (!ok) {
-      setShowCreditsModal(true);
-      return;
-    }
+    if (hasAccess(t)) { setTemplate(t); return; }
+    if (!user) { setShowAuth(true); return; }
+    const ok = await unlockTemplate(t);
+    if (!ok) { setShowCreditsModal(true); return; }
     setTemplate(t);
+    toast.success(`Template ${t} desbloqueado! ⚡`);
   };
 
   const getProgress = useCallback(() => {
@@ -214,11 +213,13 @@ const ResumeForm = () => {
   };
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
-  const handleDownload = async () => {
-    const ok = await spend("DOWNLOAD_PDF");
-    if (!ok) {
-      setShowCreditsModal(true);
-      return;
+  const handleDownload = async (skipCheck = false) => {
+    if (!skipCheck) {
+      if (!user) { setPendingAction("download-pdf"); setShowAuth(true); return; }
+      if (!isAdmin) {
+        const ok = await spend("DOWNLOAD_PDF");
+        if (!ok) { setShowCreditsModal(true); return; }
+      }
     }
     setGenerating(true);
     
@@ -373,17 +374,21 @@ const ResumeForm = () => {
           onSuccess={handleAuthSuccess}
         />
       )}
+      {showCheckout && user && (
+        <CheckoutModal
+          uid={user.uid}
+          email={user.email || ""}
+          onClose={() => { setShowCheckout(false); setPendingAction(null); }}
+          onSuccess={handleCheckoutSuccess}
+        />
+      )}
       {showCreditsModal && user && (
         <CreditsModal
           uid={user.uid}
           email={user.email || ""}
           credits={credits}
-          triggerAction="Para continuar, você precisa de créditos"
           onClose={() => setShowCreditsModal(false)}
-          onSuccess={() => {
-            setShowCreditsModal(false);
-            toast.success("Créditos adicionados com sucesso!");
-          }}
+          onSuccess={handleCheckoutSuccess}
         />
       )}
 
@@ -415,7 +420,14 @@ const ResumeForm = () => {
               {user ? (
                 <div className="flex items-center gap-2">
                   {isAdmin && <span className="text-xs bg-red-400 text-white font-bold px-2 py-0.5 rounded-full">ADMIN</span>}
-                  {isPremium && !isAdmin && <span className="text-xs bg-amber-400 text-amber-900 font-bold px-2 py-0.5 rounded-full">PREMIUM</span>}
+                  {!isAdmin && (
+                    <button
+                      onClick={() => setShowCreditsModal(true)}
+                      className="text-xs bg-violet-500 text-white font-bold px-2 py-1 rounded-full hover:bg-violet-600 transition"
+                    >
+                      ⚡ {credits} créditos
+                    </button>
+                  )}
                   <span className="text-xs opacity-70 hidden sm:block">{user.displayName || user.email}</span>
                   <button onClick={() => logout()} title="Sair" className="opacity-60 hover:opacity-100 transition">
                     <LogOut className="w-4 h-4" />
@@ -471,23 +483,27 @@ const ResumeForm = () => {
                         onShowCredits={() => setShowCreditsModal(true)}
                       />
                     </div>
-                    <PersonalInfoStep 
-                      data={data.personalInfo} 
+                    <PersonalInfoStep
+                      data={data.personalInfo}
                       onChange={(personalInfo) => setData({ ...data, personalInfo })}
-                      spend={spend}
+                      uid={uid}
+                      credits={credits}
+                      isUnlimited={isAdmin}
                       onShowCredits={() => setShowCreditsModal(true)}
+                      onShowAuth={() => setShowAuth(true)}
                     />
                   </>
                 )}
                 {step === 1 && <EducationStep data={data.education} onChange={(education) => setData({ ...data, education })} />}
-                {step === 2 && (
-                  <ExperienceStep 
-                    data={data.experience} 
-                    onChange={(experience) => setData({ ...data, experience })}
-                    spend={spend}
-                    onShowCredits={() => setShowCreditsModal(true)}
-                  />
-                )}
+                {step === 2 && <ExperienceStep
+                  data={data.experience}
+                  onChange={(experience) => setData({ ...data, experience })}
+                  uid={uid}
+                  credits={credits}
+                  isUnlimited={isAdmin}
+                  onShowCredits={() => setShowCreditsModal(true)}
+                  onShowAuth={() => setShowAuth(true)}
+                />}
                 {step === 3 && <CoursesStep data={data.courses} onChange={(courses) => setData({ ...data, courses })} />}
                 {step === 4 && (
                   <SkillsStep
@@ -591,7 +607,7 @@ const ResumeForm = () => {
                         <span className="block text-[9px] text-green-600 font-bold">GRÁTIS</span>
                       ) : (
                         <span className="block text-[9px] text-amber-600 font-bold">
-                          {hasAccess(t.id) ? "PREMIUM ✓" : "PREMIUM — R$9,90"}
+                          {hasAccess(t.id) ? "DESBLOQUEADO ✓" : "1 crédito ⚡"}
                         </span>
                       )}
                     </button>
@@ -601,43 +617,43 @@ const ResumeForm = () => {
                 {/* Card carta de apresentação — mesmo estilo dos templates */}
                 <div
                   className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm border relative flex flex-col justify-between ${
-                    isPremium || isAdmin
+                    isAdmin
                       ? "bg-background text-foreground border-border"
                       : "bg-background text-foreground border-border opacity-70"
                   }`}
                 >
-                  {!(isPremium || isAdmin) && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-40" />}
+                  {!isAdmin && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-40" />}
                   <div>
                     <span className="font-medium flex items-center gap-1">
                       <Mail className="w-3 h-3" /> Carta de Apresentação
                     </span>
                     <span className="block text-[10px] opacity-70">Gerada por IA com seus dados</span>
                     <span className="block text-[9px] text-amber-600 font-bold">
-                      {isPremium || isAdmin ? "PREMIUM ✓" : "PREMIUM — R$9,90"}
+                      {isAdmin ? "ILIMITADO ✓" : "2 créditos ⚡"}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Banner premium */}
-              {!isPremium && !isAdmin && (
+              {/* Banner créditos */}
+              {!isAdmin && (
                 <div className="mt-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="space-y-2">
                     <p className="font-semibold text-amber-900 dark:text-amber-300 text-sm">
-                      ✨ Desbloqueie tudo por apenas R$&nbsp;9,90
+                      ⚡ Compre créditos e use como quiser
                     </p>
                     <ul className="text-xs text-amber-800 dark:text-amber-400 space-y-1">
-                      <li className="flex items-center gap-2"><FileText className="w-3 h-3 flex-shrink-0" /> Todos os templates premium</li>
-                      <li className="flex items-center gap-2"><Mail className="w-3 h-3 flex-shrink-0" /> Carta de apresentação gerada por IA</li>
-                      <li className="flex items-center gap-2"><Check className="w-3 h-3 flex-shrink-0" /> Acesso vitalício · pagamento único</li>
+                      <li className="flex items-center gap-2"><FileText className="w-3 h-3 flex-shrink-0" /> Templates premium — 1 crédito cada</li>
+                      <li className="flex items-center gap-2"><Mail className="w-3 h-3 flex-shrink-0" /> Carta de apresentação — 2 créditos</li>
+                      <li className="flex items-center gap-2"><Check className="w-3 h-3 flex-shrink-0" /> Pacote Popular: 30 créditos por R$&nbsp;9,90</li>
                     </ul>
                   </div>
                   <Button
                     size="sm"
                     className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0 w-full sm:w-auto"
-                    onClick={() => { trackUnlockIntent("banner_templates"); if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+                    onClick={() => { trackUnlockIntent("banner_templates"); if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
                   >
-                    Desbloquear agora
+                    Comprar créditos
                   </Button>
                 </div>
               )}
@@ -668,16 +684,10 @@ const ResumeForm = () => {
                 spend={spend}
                 onShowCredits={() => setShowCreditsModal(true)}
               />
-              <JobRecommendations 
+              <JobRecommendations
                 userObjective={data.personalInfo.objective}
                 isPremium={isPremium || isAdmin}
-                onUpgrade={() => {
-                  if (!user) {
-                    setShowAuth(true);
-                  } else {
-                    setShowCheckout(true);
-                  }
-                }}
+                onUpgrade={() => { if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
               />
               <div className="flex justify-end pb-4">
                 <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
@@ -700,16 +710,10 @@ const ResumeForm = () => {
                   spend={spend}
                   onShowCredits={() => setShowCreditsModal(true)}
                 />
-                <JobRecommendations 
+                <JobRecommendations
                   userObjective={data.personalInfo.objective}
                   isPremium={isPremium || isAdmin}
-                  onUpgrade={() => {
-                    if (!user) {
-                      setShowAuth(true);
-                    } else {
-                      setShowCheckout(true);
-                    }
-                  }}
+                  onUpgrade={() => { if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
                 />
                 <div className="flex justify-end">
                   <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">

@@ -10,11 +10,14 @@ import { formatPhone } from "@/lib/phone-mask";
 interface Props {
   data: PersonalInfo;
   onChange: (data: PersonalInfo) => void;
-  spend: (action: string) => Promise<boolean>;
+  uid: string | null;
+  credits: number;
+  isUnlimited: boolean;
   onShowCredits: () => void;
+  onShowAuth: () => void;
 }
 
-const PersonalInfoStep = ({ data, onChange, spend, onShowCredits }: Props) => {
+const PersonalInfoStep = ({ data, onChange, uid, credits, isUnlimited, onShowCredits, onShowAuth }: Props) => {
   const update = (field: keyof PersonalInfo, value: string | null) => {
     onChange({ ...data, [field]: value });
   };
@@ -102,8 +105,11 @@ const PersonalInfoStep = ({ data, onChange, spend, onShowCredits }: Props) => {
             value={data.objective}
             onChange={(novoTexto) => update("objective", novoTexto)}
             tipo="objetivo"
-            spend={spend}
+            uid={uid}
+            credits={credits}
+            isUnlimited={isUnlimited}
             onShowCredits={onShowCredits}
+            onShowAuth={onShowAuth}
           />
         </div>
       </div>

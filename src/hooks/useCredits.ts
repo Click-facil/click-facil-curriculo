@@ -1,69 +1,70 @@
-// src/hooks/useCredits.ts
-import { useState, useEffect } from "react";
-import { doc, onSnapshot, runTransaction } from "firebase/firestore";
+import { useState, useEffect, useCallback } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { spend as spendFn, unlockTemplate as unlockFn, CREDIT_COSTS, CreditAction } from "@/lib/credits";
 
-export const CREDIT_COSTS = {
-  LINKEDIN_IMPORT:    3,
-  DOWNLOAD_PDF:       2,
-  DOWNLOAD_DOCX:      2,
-  COVER_LETTER:       2,
-  IMPROVE_AI:         1,
-  UNLOCK_TEMPLATE:    1,
-  ATS_ANALYSIS:       1,
-} as const;
+interface UseCreditsReturn {
+  credits: number;
+  unlockedTemplates: string[];
+  loading: boolean;
+  isUnlimited: boolean;
+  canAfford: (action: CreditAction) => boolean;
+  spend: (action: CreditAction) => Promise<boolean>;
+  unlockTemplate: (templateId: string) => Promise<boolean>;
+  isTemplateUnlocked: (templateId: string) => boolean;
+}
 
-export type CreditAction = keyof typeof CREDIT_COSTS;
-
-export function useCredits(uid: string | null) {
-  const [credits, setCredits] = useState<number>(0);
+export function useCredits(uid: string | null): UseCreditsReturn {
+  const [credits, setCredits] = useState(0);
   const [unlockedTemplates, setUnlockedTemplates] = useState<string[]>([]);
+  const [isUnlimited, setIsUnlimited] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!uid) { setLoading(false); return; }
+    if (!uid) {
+      setCredits(0);
+      setUnlockedTemplates([]);
+      setIsUnlimited(false);
+      setLoading(false);
+      return;
+    }
+
+    // Listener em tempo real — saldo atualiza automaticamente após compra/gasto
     const unsub = onSnapshot(doc(db, "users", uid), (snap) => {
-      const data = snap.data();
-      // Usuários antigos com legacy_premium recebem créditos ilimitados (ex: 9999)
-      if (data?.legacy_premium || data?.premium) {
-        setCredits(9999);
-      } else {
-        setCredits(data?.credits ?? 0);
-      }
-      setUnlockedTemplates(data?.unlockedTemplates ?? []);
+      const data = snap.data() ?? {};
+      const unlimited = !!(data.legacy_premium || data.premium);
+      setIsUnlimited(unlimited);
+      setCredits(unlimited ? 9999 : (data.credits ?? 0));
+      setUnlockedTemplates(data.unlockedTemplates ?? []);
+      setLoading(false);
+    }, () => {
       setLoading(false);
     });
+
     return unsub;
   }, [uid]);
 
-  const canAfford = (action: CreditAction) => credits >= CREDIT_COSTS[action];
+  const canAfford = useCallback((action: CreditAction) => {
+    if (isUnlimited) return true;
+    return credits >= CREDIT_COSTS[action];
+  }, [credits, isUnlimited]);
 
-  const spend = async (action: CreditAction, metadata?: object): Promise<boolean> => {
+  const spend = useCallback(async (action: CreditAction): Promise<boolean> => {
     if (!uid) return false;
-    const cost = CREDIT_COSTS[action];
-    if (credits < cost) return false;
+    if (isUnlimited) return true;
+    return spendFn(uid, action);
+  }, [uid, isUnlimited]);
 
-    try {
-      await runTransaction(db, async (tx) => {
-        const ref = doc(db, "users", uid);
-        const snap = await tx.get(ref);
-        const current = snap.data()?.credits ?? 0;
-        if (current < cost) throw new Error("Créditos insuficientes");
-        
-        tx.update(ref, { credits: current - cost });
-        
-        // Salva na subcollection transactions
-        const txRef = doc(db, "users", uid, "transactions", Date.now().toString());
-        tx.set(txRef, { action, cost, metadata, createdAt: new Date() });
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  };
+  const unlockTemplate = useCallback(async (templateId: string): Promise<boolean> => {
+    if (!uid) return false;
+    if (isUnlimited) return true;
+    return unlockFn(uid, templateId);
+  }, [uid, isUnlimited]);
 
-  const isTemplateUnlocked = (template: string) =>
-    credits >= 9999 || unlockedTemplates.includes(template);
+  const isTemplateUnlocked = useCallback((templateId: string): boolean => {
+    if (isUnlimited) return true;
+    return unlockedTemplates.includes(templateId);
+  }, [isUnlimited, unlockedTemplates]);
 
-  return { credits, loading, canAfford, spend, isTemplateUnlocked };
-}
+  return { credits, unlockedTemplates, loading, isUnlimited, canAfford, spend, unlockTemplate, isTemplateUnlocked };
+} 
