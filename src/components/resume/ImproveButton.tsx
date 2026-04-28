@@ -9,11 +9,13 @@ interface ImproveButtonProps {
   value: string;
   onChange: (novoTexto: string) => void;
   tipo?: TipoMelhoria;
+  spend: (feature: string) => Promise<boolean>;
+  onShowCredits: () => void;
 }
 
 const COOLDOWN_SEGUNDOS = 5;
 
-export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveButtonProps) {
+export function ImproveButton({ value, onChange, tipo = "objetivo", spend, onShowCredits }: ImproveButtonProps) {
   const { improveText, loading, error } = useTextImprover();
   const [preview, setPreview] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -40,6 +42,11 @@ export function ImproveButton({ value, onChange, tipo = "objetivo" }: ImproveBut
   }, []);
 
   async function handleClick() {
+    const ok = await spend("IMPROVE_AI");
+    if (!ok) {
+      onShowCredits();
+      return;
+    }
     const resultado = await improveText(value, tipo);
     if (resultado) {
       setPreview(resultado);

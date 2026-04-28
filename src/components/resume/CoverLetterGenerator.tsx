@@ -9,9 +9,8 @@ const COOLDOWN_SEGUNDOS = 8;
 
 interface CoverLetterGeneratorProps {
   data: ResumeData;
-  isPremium: boolean;
-  isAdmin: boolean;
-  onUnlock: () => void;
+  spend: (action: string) => Promise<boolean>;
+  onShowCredits: () => void;
 }
 
 function buildPrompt(data: ResumeData): string {
@@ -57,7 +56,7 @@ Formação: ${formacaoTexto}
 Habilidades: ${habilidadesTexto}`;
 }
 
-export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: CoverLetterGeneratorProps) {
+export function CoverLetterGenerator({ data, spend, onShowCredits }: CoverLetterGeneratorProps) {
   const [carta, setCarta] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +64,6 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
   const [cooldown, setCooldown] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const temAcesso = isPremium || isAdmin;
   const emCooldown = cooldown > 0;
 
   function iniciarCooldown() {
@@ -79,6 +77,12 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
   }
 
   async function handleGerar() {
+    const ok = await spend("COVER_LETTER");
+    if (!ok) {
+      onShowCredits();
+      return;
+    }
+
     const apiKey = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
     if (!apiKey) { setError("Chave da API não configurada."); return; }
 
@@ -126,44 +130,14 @@ export function CoverLetterGenerator({ data, isPremium, isAdmin, onUnlock }: Cov
     setTimeout(() => setCopied(false), 2500);
   }
 
-  // --- ESTADO: sem acesso premium ---
-  if (!temAcesso) {
-    return (
-      <div className="rounded-xl border border-border bg-card p-5 space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Lock className="w-4 h-4 text-primary" />
-          </div>
-          <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-            <Mail className="w-3.5 h-3.5 text-muted-foreground" /> Carta de Apresentação
-            <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">PREMIUM</span>
-          </h3>
-        </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          A IA gera uma carta profissional baseada no seu currículo, pronta para colar no corpo do e-mail ao enviar seu CV para recrutadores.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Disponível no <strong className="text-foreground">plano premium</strong> junto com todos os templates exclusivos.
-        </p>
-        <Button
-          size="sm"
-          className="w-full bg-amber-500 hover:bg-amber-600 text-white"
-          onClick={() => { trackUnlockIntent("card_carta"); onUnlock(); }}
-        >
-          Desbloquear por R$&nbsp;9,90
-        </Button>
-      </div>
-    );
-  }
-
-  // --- ESTADO: tem acesso premium ---
+  // --- ESTADO: componente sempre disponível, mas gasta créditos ---
   return (
     <div className="rounded-xl border border-border bg-card p-4 space-y-3">
       {/* Cabeçalho */}
       <div>
         <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
           <Mail className="w-3.5 h-3.5 text-muted-foreground" /> Carta de Apresentação
-          <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">PREMIUM</span>
+          <span className="text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300 px-1.5 py-0.5 rounded-full">2 créditos</span>
         </h3>
         <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
           Gerada por IA, pronta para <strong>colar no corpo do e-mail</strong> ao enviar seu CV.

@@ -15,7 +15,8 @@ import SkillsStep from "./SkillsStep";
 import ResumePreview from "./ResumePreview";
 import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
-import CheckoutModal from "./CheckoutModal";
+import { useCredits } from "@/hooks/useCredits";
+import CreditsModal from "./CreditsModal";
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import { ATSAnalyzer } from "./ATSAnalyzer";
 import { LinkedInImporter } from "./LinkedInImporter";
@@ -71,6 +72,8 @@ const ResumeForm = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [showCreditsModal, setShowCreditsModal] = useState(false);
+  const { credits, spend, isTemplateUnlocked } = useCredits(uid);
 
   useEffect(() => {
     const unsub = onAuthChange(async (u) => {
@@ -159,7 +162,18 @@ const ResumeForm = () => {
     setPendingAction(null);
   };
 
-  const handleSelectTemplate = (t: TemplateStyle) => setTemplate(t);
+  const handleSelectTemplate = async (t: TemplateStyle) => {
+    if (isTemplateUnlocked(t)) {
+      setTemplate(t);
+      return;
+    }
+    const ok = await spend("UNLOCK_TEMPLATE", { template: t });
+    if (!ok) {
+      setShowCreditsModal(true);
+      return;
+    }
+    setTemplate(t);
+  };
 
   const getProgress = useCallback(() => {
     const pi = data.personalInfo;
@@ -200,9 +214,10 @@ const ResumeForm = () => {
   };
   const prev = () => setStep((s) => Math.max(s - 1, 0));
 
-  const handleDownload = async (skipCheck = false) => {
-    if (!skipCheck && !hasAccess(template)) {
-      requireAccessForDownload("download-pdf");
+  const handleDownload = async () => {
+    const ok = await spend("DOWNLOAD_PDF");
+    if (!ok) {
+      setShowCreditsModal(true);
       return;
     }
     setGenerating(true);
@@ -358,12 +373,17 @@ const ResumeForm = () => {
           onSuccess={handleAuthSuccess}
         />
       )}
-      {showCheckout && user && (
-        <CheckoutModal
+      {showCreditsModal && user && (
+        <CreditsModal
           uid={user.uid}
           email={user.email || ""}
-          onClose={() => { setShowCheckout(false); setPendingAction(null); }}
-          onSuccess={handleCheckoutSuccess}
+          credits={credits}
+          triggerAction="Para continuar, você precisa de créditos"
+          onClose={() => setShowCreditsModal(false)}
+          onSuccess={() => {
+            setShowCreditsModal(false);
+            toast.success("Créditos adicionados com sucesso!");
+          }}
         />
       )}
 
@@ -447,23 +467,27 @@ const ResumeForm = () => {
                           setData({ ...data, ...importedData });
                           toast.success("Dados importados do LinkedIn com sucesso!");
                         }}
-                        isPremium={isPremium || isAdmin}
-                        onUnlock={() => {
-                          if (!user) {
-                            setPendingAction("linkedin-import");
-                            setShowAuth(true);
-                          } else {
-                            setPendingAction("linkedin-import");
-                            setShowCheckout(true);
-                          }
-                        }}
+                        spend={spend}
+                        onShowCredits={() => setShowCreditsModal(true)}
                       />
                     </div>
-                    <PersonalInfoStep data={data.personalInfo} onChange={(personalInfo) => setData({ ...data, personalInfo })} />
+                    <PersonalInfoStep 
+                      data={data.personalInfo} 
+                      onChange={(personalInfo) => setData({ ...data, personalInfo })}
+                      spend={spend}
+                      onShowCredits={() => setShowCreditsModal(true)}
+                    />
                   </>
                 )}
                 {step === 1 && <EducationStep data={data.education} onChange={(education) => setData({ ...data, education })} />}
-                {step === 2 && <ExperienceStep data={data.experience} onChange={(experience) => setData({ ...data, experience })} />}
+                {step === 2 && (
+                  <ExperienceStep 
+                    data={data.experience} 
+                    onChange={(experience) => setData({ ...data, experience })}
+                    spend={spend}
+                    onShowCredits={() => setShowCreditsModal(true)}
+                  />
+                )}
                 {step === 3 && <CoursesStep data={data.courses} onChange={(courses) => setData({ ...data, courses })} />}
                 {step === 4 && (
                   <SkillsStep
@@ -633,12 +657,16 @@ const ResumeForm = () => {
                   <ResumePreview data={data} template={template} />
                 </div>
               </div>
-              <ATSAnalyzer data={data} />
+              <ATSAnalyzer 
+                data={data}
+                spend={spend}
+                onShowCredits={() => setShowCreditsModal(true)}
+                uid={uid}
+              />
               <CoverLetterGenerator
                 data={data}
-                isPremium={isPremium}
-                isAdmin={isAdmin}
-                onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+                spend={spend}
+                onShowCredits={() => setShowCreditsModal(true)}
               />
               <JobRecommendations 
                 userObjective={data.personalInfo.objective}
@@ -661,12 +689,16 @@ const ResumeForm = () => {
             {/* Desktop: coluna lateral esquerda (ATS + vagas + carta + limpar) | coluna direita (prévia) */}
             <div className="hidden xl:flex flex-row gap-6 items-start pb-8">
               <div className="w-72 flex-shrink-0 space-y-4">
-                <ATSAnalyzer data={data} />
+                <ATSAnalyzer 
+                  data={data}
+                  spend={spend}
+                  onShowCredits={() => setShowCreditsModal(true)}
+                  uid={uid}
+                />
                 <CoverLetterGenerator
                   data={data}
-                  isPremium={isPremium}
-                  isAdmin={isAdmin}
-                  onUnlock={() => { if (!user) { setShowAuth(true); } else { setShowCheckout(true); } }}
+                  spend={spend}
+                  onShowCredits={() => setShowCreditsModal(true)}
                 />
                 <JobRecommendations 
                   userObjective={data.personalInfo.objective}

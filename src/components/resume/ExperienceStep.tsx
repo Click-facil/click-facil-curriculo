@@ -11,9 +11,11 @@ import { ImproveButton } from "./ImproveButton";
 interface Props {
   data: Experience[];
   onChange: (data: Experience[]) => void;
+  spend: (action: string) => Promise<boolean>;
+  onShowCredits: () => void;
 }
 
-const ExperienceStep = ({ data, onChange }: Props) => {
+const ExperienceStep = ({ data, onChange, spend, onShowCredits }: Props) => {
   const add = () => {
     onChange([...data, { id: crypto.randomUUID(), company: "", city: "", position: "", startDate: "", endDate: "", current: false, description: "" }]);
   };
@@ -85,6 +87,8 @@ const ExperienceStep = ({ data, onChange }: Props) => {
                 value={exp.description}
                 onChange={(novoTexto) => update(exp.id, "description", novoTexto)}
                 tipo="experiencia"
+                spend={spend}
+                onShowCredits={onShowCredits}
               />
             </div>
           </div>

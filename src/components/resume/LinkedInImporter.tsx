@@ -9,8 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 interface LinkedInImporterProps {
   onImport: (data: Partial<ResumeData>) => void;
-  isPremium: boolean;
-  onUnlock: () => void;
+  spend: (feature: string) => Promise<boolean>;
+  onShowCredits: () => void;
 }
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -64,7 +64,7 @@ Regras:
 
 Texto do perfil LinkedIn:`;
 
-export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImporterProps) {
+export function LinkedInImporter({ onImport, spend, onShowCredits }: LinkedInImporterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [linkedinText, setLinkedinText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,6 +73,12 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
   const [showTutorial, setShowTutorial] = useState(false);
 
   const extractData = async () => {
+    const ok = await spend("LINKEDIN_IMPORT");
+    if (!ok) {
+      onShowCredits();
+      return;
+    }
+
     const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 
     if (!apiKey) {
@@ -212,16 +218,14 @@ export function LinkedInImporter({ onImport, isPremium, onUnlock }: LinkedInImpo
   return (
     <>
       <Button 
-        onClick={() => isPremium ? setIsOpen(true) : onUnlock()} 
+        onClick={() => setIsOpen(true)} 
         variant="outline"
         className="gap-2"
         size="sm"
       >
-        {!isPremium && <Lock className="h-4 w-4" />}
-        {isPremium ? <Upload className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+        <Upload className="h-4 w-4" />
         <span className="hidden sm:inline">Importar do LinkedIn</span>
         <span className="sm:hidden">LinkedIn</span>
-        {!isPremium && <span className="text-xs opacity-70 ml-1 hidden md:inline">Premium</span>}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={(open) => {

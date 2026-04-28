@@ -61,7 +61,14 @@ async function getFirestoreToken(clientEmail: string, privateKey: string): Promi
   return data.access_token;
 }
 
-async function grantPremiumFirestore(uid: string): Promise<void> {
+const PACKAGES: Record<string, number> = {
+  "starter": 10,
+  "popular": 30,
+  "pro": 80,
+  "subscription": 50,
+};
+
+async function addCredits(uid: string, amount: number): Promise<void> {
   const projectId = process.env.FIREBASE_PROJECT_ID!;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL!;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY!;
@@ -77,8 +84,8 @@ async function grantPremiumFirestore(uid: string): Promise<void> {
     },
     body: JSON.stringify({
       fields: {
-        premium: { booleanValue: true },
-        grantedAt: { timestampValue: new Date().toISOString() },
+        credits: { integerValue: amount },
+        lastCreditUpdate: { timestampValue: new Date().toISOString() },
       },
     }),
   });
@@ -111,7 +118,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     const payment = (await mpRes.json()) as {
       status: string;
-      metadata?: { uid?: string };
+      metadata?: { uid?: string; package_id?: string };
       external_reference?: string;
     };
 
@@ -126,9 +133,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ warning: "No uid in payment" });
     }
 
-    await grantPremiumFirestore(uid);
-    console.log(`Premium concedido: uid=${uid}, payment=${paymentId}`);
-    return res.status(200).json({ ok: true, uid });
+    const packageId = payment.metadata?.package_id ?? "popular";
+    const creditsToAdd = PACKAGES[packageId] ?? 30;
+    await addCredits(uid, creditsToAdd);
+    console.log(`Créditos adicionados: uid=${uid}, payment=${paymentId}, credits=${creditsToAdd}`);
+    return res.status(200).json({ ok: true, uid, credits: creditsToAdd });
   } catch (err) {
     console.error("Erro no webhook:", err);
     return res.status(500).json({ error: "Internal error" });
