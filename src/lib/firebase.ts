@@ -77,30 +77,45 @@ export async function grantPremium(uid: string): Promise<void> {
   );
 }
 
-// Adicionar em src/lib/firebase.ts
-
 export async function getUserCredits(uid: string): Promise<number> {
-  const snap = await getDoc(doc(db, "users", uid));
-  const data = snap.data();
-  if (data?.legacy_premium || data?.premium) return 9999;
-  return data?.credits ?? 0;
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+    const data = snap.data();
+    if (data?.legacy_premium || data?.premium) return 9999;
+    return data?.credits ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 export async function grantWelcomeCredits(uid: string): Promise<void> {
-  await setDoc(doc(db, "users", uid), {
-    credits: 5,            // bônus de boas-vindas
-    freeCreditsUsed: true,
-    createdAt: serverTimestamp(),
-  }, { merge: true });
+  // Verifica se já recebeu créditos de boas-vindas para não duplicar
+  const snap = await getDoc(doc(db, "users", uid));
+  if (snap.exists() && snap.data()?.freeCreditsUsed === true) return;
+
+  await setDoc(
+    doc(db, "users", uid),
+    {
+      credits: 5,
+      creditsTotal: 5,
+      freeCreditsUsed: true,
+      createdAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
 }
 
 export async function addCredits(uid: string, amount: number): Promise<void> {
-  const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
+  const snap = await getDoc(doc(db, "users", uid));
   const current = snap.data()?.credits ?? 0;
-  await setDoc(ref, {
-    credits: current + amount,
-    creditsTotal: (snap.data()?.creditsTotal ?? 0) + amount,
-    lastPurchaseAt: serverTimestamp(),
-  }, { merge: true });
+  const currentTotal = snap.data()?.creditsTotal ?? 0;
+  await setDoc(
+    doc(db, "users", uid),
+    {
+      credits: current + amount,
+      creditsTotal: currentTotal + amount,
+      lastPurchaseAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
 }

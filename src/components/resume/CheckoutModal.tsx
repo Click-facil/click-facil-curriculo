@@ -406,16 +406,16 @@ const CheckoutModal = ({ uid, email, onClose, onSuccess }: Props) => {
                   </div>
                   <div>
                     <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Nome no cartão</label>
-                    <div id="mp-cardholder-name" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
+                    <input id="mp-cardholder-name" placeholder="Nome igual no cartão" className="h-10 w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800 text-sm text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">Tipo documento</label>
-                      <div id="mp-identification-type" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
+                      <select id="mp-identification-type" className="h-10 w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800 text-sm text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1 block">CPF</label>
-                      <div id="mp-identification-number" className="h-10 border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800" />
+                      <input id="mp-identification-number" placeholder="000.000.000-00" className="h-10 w-full border border-gray-300 dark:border-zinc-600 rounded-lg px-3 bg-white dark:bg-zinc-800 text-sm text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                   </div>
                   <div id="mp-issuer" style={{ display: "none" }} />

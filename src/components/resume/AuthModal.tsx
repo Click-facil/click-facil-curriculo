@@ -6,6 +6,7 @@ import {
   loginWithGoogle,
   loginWithEmail,
   registerWithEmail,
+  grantWelcomeCredits,
 } from "@/lib/firebase";
 import { toast } from "sonner";
 
@@ -27,8 +28,16 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
   const handleGoogle = async () => {
     setLoading(true);
     try {
-      await loginWithGoogle();
-      toast.success("Login realizado com sucesso!");
+      const result = await loginWithGoogle();
+      const uid = result.user.uid;
+      // Verifica se é novo usuário pelo Firebase (_tokenResponse é interno mas confiável)
+      const isNew = (result as any)._tokenResponse?.isNewUser === true;
+      if (isNew) {
+        await grantWelcomeCredits(uid);
+        toast.success("Conta criada! Você ganhou 5 créditos grátis ⚡");
+      } else {
+        toast.success("Login realizado com sucesso!");
+      }
       onSuccess();
     } catch (e: any) {
       toast.error(e?.message || "Erro ao entrar com Google.");
@@ -48,8 +57,9 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
         await loginWithEmail(email, password);
         toast.success("Login realizado!");
       } else {
-        await registerWithEmail(email, password);
-        toast.success("Conta criada com sucesso!");
+        const credential = await registerWithEmail(email, password);
+        await grantWelcomeCredits(credential.user.uid);
+        toast.success("Conta criada! Você ganhou 5 créditos grátis ⚡");
       }
       onSuccess();
     } catch (e: any) {
@@ -89,11 +99,11 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
           {context === "premium" ? (
             <>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Acesso Premium
+                Ganhe 5 créditos grátis
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Faça login para acessar os templates premium e guardar seu
-                currículo para sempre.
+                Crie sua conta e use créditos para importar LinkedIn, gerar
+                carta de apresentação, melhorar com IA e muito mais.
               </p>
             </>
           ) : (
@@ -102,8 +112,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
                 Salvar currículo
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Crie uma conta grátis para acessar seu currículo de qualquer
-                dispositivo.
+                Crie uma conta grátis e ganhe 5 créditos de boas-vindas ⚡
               </p>
             </>
           )}
