@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   ArrowLeft, ArrowRight, Download, Eye, EyeOff, FileText,
-  Save, Palette, Mail, Info, Lock, LogOut, User, Check,
+  Save, Palette, Mail, Info, Lock, LogOut, User, Check, Sparkles,
 } from "lucide-react";
 import { ResumeData, emptyResume } from "@/types/resume";
 import StepIndicator from "./StepIndicator";
@@ -147,7 +147,6 @@ const ResumeForm = () => {
   };
 
   const handleCheckoutSuccess = () => {
-    setShowCheckout(false);
     setShowCreditsModal(false);
     toast.success("🎉 Créditos adicionados com sucesso!");
     executePendingAction();
@@ -207,13 +206,6 @@ const ResumeForm = () => {
     if (!skipCheck) {
       if (!user) { setPendingAction("download-pdf"); setShowAuth(true); return; }
       if (!isAdmin) {
-        // Se for template premium e não está desbloqueado, cobra 1 crédito extra
-        const isPremiumTemplate = PREMIUM_TEMPLATES.includes(template);
-        if (isPremiumTemplate && !isTemplateUnlocked(template)) {
-          const unlocked = await unlockTemplate(template);
-          if (!unlocked) { setShowCreditsModal(true); return; }
-          toast.success(`Template ${template} desbloqueado! ⚡`);
-        }
         // Cobra 2 créditos pelo download
         const ok = await spend("DOWNLOAD_PDF");
         if (!ok) { setShowCreditsModal(true); return; }
@@ -472,6 +464,7 @@ const ResumeForm = () => {
                         }}
                         spend={spend}
                         onShowCredits={() => setShowCreditsModal(true)}
+                        isAdmin={isAdmin}
                       />
                     </div>
                     <PersonalInfoStep
@@ -563,8 +556,10 @@ const ResumeForm = () => {
                 </Button>
                 <Button onClick={() => handleDownload()} disabled={generating}>
                   <Download className="w-4 h-4 mr-2" />
-                  {!hasAccess(template) && <Lock className="w-3 h-3 mr-1 opacity-60" />}
                   {generating ? "Gerando..." : "Baixar PDF"}
+                  {!isAdmin && !generating && (
+                    <span className="ml-2 text-[10px] opacity-70">2 créditos</span>
+                  )}
                 </Button>
               </div>
             </div>
@@ -591,27 +586,11 @@ const ResumeForm = () => {
                           : "bg-white dark:bg-zinc-800 text-foreground border-border hover:border-blue-400 hover:shadow-md"
                       }`}
                     >
-                      {locked && !active && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                          <Lock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                        </div>
-                      )}
                       <div className="flex flex-col items-start">
                         <span className="font-semibold">{t.name}</span>
                         <span className={`block text-[10px] mt-0.5 ${
                           active ? "text-white/80" : "text-muted-foreground"
                         }`}>{t.description}</span>
-                        {t.free ? (
-                          <span className={`block text-[9px] font-semibold mt-1 ${
-                            active ? "text-white" : "text-green-600 dark:text-green-500"
-                          }`}>GRÁTIS</span>
-                        ) : (
-                          <span className={`block text-[9px] font-semibold mt-1 ${
-                            active ? "text-white" : hasAccess(t.id) ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-500"
-                          }`}>
-                            {hasAccess(t.id) ? "DESBLOQUEADO ✓" : "1 crédito ⚡"}
-                          </span>
-                        )}
                       </div>
                     </button>
                   );
@@ -620,24 +599,24 @@ const ResumeForm = () => {
 
               {/* Banner créditos */}
               {!isAdmin && (
-                <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border border-blue-200 dark:border-blue-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="space-y-2">
-                    <p className="font-semibold text-blue-900 dark:text-blue-300 text-sm flex items-center gap-2">
-                      <span className="text-lg">⚡</span> Use seus créditos como quiser
-                    </p>
-                    <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                      <li className="flex items-center gap-2"><FileText className="w-3 h-3 flex-shrink-0" /> Todos os templates — 1 crédito cada</li>
-                      <li className="flex items-center gap-2"><Download className="w-3 h-3 flex-shrink-0" /> Download PDF — 2 créditos</li>
-                      <li className="flex items-center gap-2"><Check className="w-3 h-3 flex-shrink-0" /> Pacote Popular: 30 créditos por R$&nbsp;9,90</li>
-                    </ul>
+                <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border border-blue-200 dark:border-blue-800/50">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-900 dark:text-blue-300 text-sm mb-2">
+                        🎯 Escolha qualquer template e baixe quantas vezes quiser
+                      </p>
+                      <p className="text-xs text-blue-800 dark:text-blue-400 leading-relaxed">
+                        Cada download custa apenas <strong>2 créditos</strong>. Teste diferentes templates, ajuste seu currículo e baixe novamente sem limites.
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white flex-shrink-0 w-full sm:w-auto shadow-lg font-semibold"
+                      onClick={() => { trackUnlockIntent("banner_templates"); if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
+                    >
+                      ⚡ Comprar créditos
+                    </Button>
                   </div>
-                  <Button
-                    size="sm"
-                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white flex-shrink-0 w-full sm:w-auto shadow-lg"
-                    onClick={() => { trackUnlockIntent("banner_templates"); if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
-                  >
-                    Comprar créditos
-                  </Button>
                 </div>
               )}
             </div>
@@ -656,12 +635,7 @@ const ResumeForm = () => {
                   <ResumePreview data={data} template={template} />
                 </div>
               </div>
-              <ATSAnalyzer 
-                data={data}
-                spend={spend}
-                onShowCredits={() => setShowCreditsModal(true)}
-                uid={uid}
-              />
+              <ATSAnalyzer data={data} />
               <CoverLetterGenerator
                 data={data}
                 spend={spend}
@@ -682,12 +656,7 @@ const ResumeForm = () => {
             {/* Desktop: coluna lateral esquerda (ATS + vagas + carta + limpar) | coluna direita (prévia) */}
             <div className="hidden xl:flex flex-row gap-6 items-start pb-8">
               <div className="w-72 flex-shrink-0 space-y-4">
-                <ATSAnalyzer 
-                  data={data}
-                  spend={spend}
-                  onShowCredits={() => setShowCreditsModal(true)}
-                  uid={uid}
-                />
+                <ATSAnalyzer data={data} />
                 <CoverLetterGenerator
                   data={data}
                   spend={spend}

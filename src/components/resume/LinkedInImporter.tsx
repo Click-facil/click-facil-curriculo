@@ -11,6 +11,7 @@ interface LinkedInImporterProps {
   onImport: (data: Partial<ResumeData>) => void;
   spend: (feature: string) => Promise<boolean>;
   onShowCredits: () => void;
+  isAdmin: boolean;
 }
 
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
@@ -64,7 +65,7 @@ Regras:
 
 Texto do perfil LinkedIn:`;
 
-export function LinkedInImporter({ onImport, spend, onShowCredits }: LinkedInImporterProps) {
+export function LinkedInImporter({ onImport, spend, onShowCredits, isAdmin }: LinkedInImporterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [linkedinText, setLinkedinText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -226,6 +227,11 @@ export function LinkedInImporter({ onImport, spend, onShowCredits }: LinkedInImp
         <Upload className="h-4 w-4" />
         <span className="hidden sm:inline">Importar do LinkedIn</span>
         <span className="sm:hidden">LinkedIn</span>
+        {!isAdmin && (
+          <span className="text-[10px] text-muted-foreground opacity-60 ml-1">
+            3 créditos
+          </span>
+        )}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={(open) => {

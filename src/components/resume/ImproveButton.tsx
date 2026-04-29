@@ -194,10 +194,7 @@ Retorne APENAS os tópicos melhorados, um por linha, sem numeração, sem aspas,
               {!usedFreeImprovement ? (
                 <span className="text-green-600 dark:text-green-500 font-medium">1 grátis</span>
               ) : (
-                <>
-                  <Zap className="w-3 h-3" />
-                  {credits} créditos
-                </>
+                <span className="font-medium">1 crédito</span>
               )}
             </span>
           )}
@@ -244,6 +241,11 @@ Retorne APENAS os tópicos melhorados, um por linha, sem numeração, sem aspas,
               <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
               Gerar nova {cooldown > 0 && `(${cooldown}s)`}
             </Button>
+            {!isUnlimited && (
+              <span className="text-[10px] text-muted-foreground opacity-60">
+                1 crédito
+              </span>
+            )}
           </div>
         </div>
       )}

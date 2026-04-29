@@ -34,7 +34,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
       const isNew = (result as any)._tokenResponse?.isNewUser === true;
       if (isNew) {
         await grantWelcomeCredits(uid);
-        toast.success("Conta criada! Você ganhou 5 créditos grátis ⚡");
+        toast.success("Conta criada! Você ganhou 8 créditos grátis ⚡");
       } else {
         toast.success("Login realizado com sucesso!");
       }
@@ -59,7 +59,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
       } else {
         const credential = await registerWithEmail(email, password);
         await grantWelcomeCredits(credential.user.uid);
-        toast.success("Conta criada! Você ganhou 5 créditos grátis ⚡");
+        toast.success("Conta criada! Você ganhou 8 créditos grátis ⚡");
       }
       onSuccess();
     } catch (e: any) {
@@ -99,7 +99,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
           {context === "premium" ? (
             <>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Ganhe 5 créditos grátis
+                Ganhe 8 créditos grátis
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 Crie sua conta e use créditos para importar LinkedIn, gerar
@@ -112,7 +112,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
                 Salvar currículo
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Crie uma conta grátis e ganhe 5 créditos de boas-vindas ⚡
+                Crie uma conta grátis e ganhe 8 créditos de boas-vindas ⚡
               </p>
             </>
           )}

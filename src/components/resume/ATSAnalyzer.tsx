@@ -18,9 +18,6 @@ interface ATSResult {
 
 interface ATSAnalyzerProps {
   data: ResumeData;
-  spend: (action: string) => Promise<boolean>;
-  onShowCredits: () => void;
-  uid: string | null;
 }
 
 function buildPrompt(data: ResumeData): string {
@@ -98,21 +95,12 @@ function IconeStatus({ status }: { status: ATSItem["status"] }) {
   return <XCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />;
 }
 
-export function ATSAnalyzer({ data, spend, onShowCredits, uid }: ATSAnalyzerProps) {
+export function ATSAnalyzer({ data }: ATSAnalyzerProps) {
   const [result, setResult] = useState<ATSResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [animatedNota, setAnimatedNota] = useState(0);
-  const [usedFreeAnalysis, setUsedFreeAnalysis] = useState(false);
   const hasAnalyzed = useRef(false);
-
-  // Verifica se já usou a análise grátis
-  useEffect(() => {
-    if (!uid) return;
-    const key = `ats_free_used_${uid}`;
-    const used = localStorage.getItem(key) === "true";
-    setUsedFreeAnalysis(used);
-  }, [uid]);
 
   // Analisa automaticamente quando o componente monta
   useEffect(() => {
@@ -136,15 +124,6 @@ export function ATSAnalyzer({ data, spend, onShowCredits, uid }: ATSAnalyzerProp
   }, [result]);
 
   async function analyze() {
-    // Se não é a primeira análise, cobra crédito
-    if (usedFreeAnalysis) {
-      const ok = await spend("ATS_ANALYSIS");
-      if (!ok) {
-        onShowCredits();
-        return;
-      }
-    }
-
     const apiKey = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
     if (!apiKey) { setError("Chave da API não configurada."); return; }
 
@@ -178,12 +157,6 @@ export function ATSAnalyzer({ data, spend, onShowCredits, uid }: ATSAnalyzerProp
       const parsed: ATSResult = JSON.parse(match[0]);
       setResult(parsed);
       trackATSAnalyzed(parsed.nota);
-      
-      // Marca que usou a análise grátis
-      if (!usedFreeAnalysis && uid) {
-        localStorage.setItem(`ats_free_used_${uid}`, "true");
-        setUsedFreeAnalysis(true);
-      }
     } catch (err: unknown) {
       setError("Não foi possível analisar o currículo. Tente recarregar a página.");
     } finally {
@@ -201,16 +174,6 @@ export function ATSAnalyzer({ data, spend, onShowCredits, uid }: ATSAnalyzerProp
         <div className="flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-muted-foreground" />
           <h3 className="font-semibold text-foreground text-sm">Análise ATS</h3>
-          {!usedFreeAnalysis && (
-            <span className="text-[10px] font-medium bg-green-100/60 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-1.5 py-0.5 rounded-full opacity-70">
-              1ª GRÁTIS
-            </span>
-          )}
-          {usedFreeAnalysis && (
-            <span className="text-[10px] font-medium bg-blue-100/60 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-1.5 py-0.5 rounded-full opacity-70">
-              1 crédito
-            </span>
-          )}
         </div>
         <p className="text-[10px] text-muted-foreground leading-relaxed">
           Baseada nos critérios reais dos sistemas Gupy, Kenoby e Workday.
