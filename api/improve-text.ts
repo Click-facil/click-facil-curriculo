@@ -4,6 +4,10 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const GROQ_API_KEY = process.env.VITE_GROQ_API_KEY || "";
 
+const ADMIN_UIDS: string[] = [
+  "VC84FK6HWsfVBCVCt43OK6xw9x43",
+];
+
 // Inicializa Firebase Admin
 if (!getApps().length) {
   initializeApp({
@@ -22,6 +26,13 @@ const CREDIT_COSTS = {
 } as const;
 
 async function spendCredits(uid: string): Promise<boolean> {
+  // Admin tem acesso ilimitado
+  if (ADMIN_UIDS.includes(uid)) {
+    console.log("[spendCredits] Admin detectado, acesso liberado:", uid);
+    return true;
+  }
+  
+  console.log("[spendCredits] Verificando créditos para uid:", uid);
   const ref = db.collection("users").doc(uid);
   
   try {
@@ -29,13 +40,21 @@ async function spendCredits(uid: string): Promise<boolean> {
       const snap = await tx.get(ref);
       const data = snap.data() ?? {};
 
+      console.log("[spendCredits] Dados do usuário:", { credits: data.credits, premium: data.premium, legacy_premium: data.legacy_premium });
+
       // Usuários premium/legacy têm créditos ilimitados
-      if (data.legacy_premium || data.premium) return true;
+      if (data.legacy_premium || data.premium) {
+        console.log("[spendCredits] Usuário premium/legacy, acesso liberado");
+        return true;
+      }
 
       const current: number = data.credits ?? 0;
       const cost = CREDIT_COSTS.IMPROVE_AI;
       
-      if (current < cost) return false;
+      if (current < cost) {
+        console.log("[spendCredits] Créditos insuficientes:", current, "< ", cost);
+        return false;
+      }
 
       tx.update(ref, {
         credits: current - cost,
@@ -43,12 +62,13 @@ async function spendCredits(uid: string): Promise<boolean> {
         usage_IMPROVE_AI: (data.usage_IMPROVE_AI ?? 0) + 1,
       });
       
+      console.log("[spendCredits] Crédito gasto com sucesso. Novo saldo:", current - cost);
       return true;
     });
     
     return result;
   } catch (e) {
-    console.error("spend error:", e);
+    console.error("[spendCredits] Erro:", e);
     return false;
   }
 }
@@ -64,26 +84,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Campos obrigatórios: text, tipo, uid" });
   }
 
+  console.log("[improve-text] uid:", uid, "isAdmin:", ADMIN_UIDS.includes(uid));
+
   try {
-    // Gasta 1 crédito antes de melhorar
+    // Gasta 1 crédito antes de melhorar (exceto admin)
     const success = await spendCredits(uid);
     if (!success) {
+      console.log("[improve-text] Créditos insuficientes para uid:", uid);
       return res.status(402).json({ error: "Créditos insuficientes" });
     }
 
     let prompt = "";
     if (tipo === "objetivo") {
-      prompt = `Você é um especialista em currículos profissionais. Melhore o seguinte objetivo profissional para um currículo, tornando-o mais impactante, direto e profissional. Mantenha em português do Brasil e em no máximo 3 linhas:
+      prompt = `Você é um especialista em currículos profissionais e recrutamento.
 
+Melhore o seguinte objetivo profissional para um currículo, tornando-o mais impactante, específico e profissional.
+
+REGRAS:
+- Use linguagem formal e direta
+- Destaque competências e valor que o candidato traz
+- Seja específico sobre a área de atuação
+- Mantenha entre 3-4 linhas
+- Use verbos de ação (buscar, contribuir, aplicar, desenvolver)
+- Evite clichês genéricos
+
+TEXTO ORIGINAL:
 "${text}"
 
-Retorne APENAS o texto melhorado, sem aspas ou formatação adicional.`;
+Retorne APENAS o texto melhorado, sem aspas, sem títulos, sem explicações adicionais.`;
     } else if (tipo === "experiencia") {
-      prompt = `Você é um especialista em currículos profissionais. Melhore a seguinte descrição de experiência profissional, usando verbos de ação no passado, destacando resultados e conquistas. Mantenha em português do Brasil e organize em tópicos curtos (máximo 4 linhas):
+      prompt = `Você é um especialista em currículos profissionais e recrutamento.
 
+Melhore a seguinte descrição de experiência profissional para um currículo.
+
+REGRAS:
+- Use verbos de ação no passado (desenvolvi, implementei, gerenciei, coordenei, otimizei, liderei)
+- Destaque resultados concretos e conquistas mensuráveis quando possível
+- Organize em 3-5 tópicos (bullet points)
+- Cada tópico deve ter 1-2 linhas
+- Seja específico sobre tecnologias, metodologias ou processos
+- Evite descrições vagas ou genéricas
+- Use linguagem profissional e impactante
+
+TEXTO ORIGINAL:
 "${text}"
 
-Retorne APENAS o texto melhorado, sem aspas ou formatação adicional. Cada linha deve ser um tópico separado.`;
+Retorne APENAS os tópicos melhorados, um por linha, sem numeração, sem aspas, sem explicações adicionais.`;
     } else {
       return res.status(400).json({ error: "Tipo inválido. Use 'objetivo' ou 'experiencia'" });
     }

@@ -137,7 +137,7 @@ export function CoverLetterGenerator({ data, spend, onShowCredits }: CoverLetter
       <div>
         <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
           <Mail className="w-3.5 h-3.5 text-muted-foreground" /> Carta de Apresentação
-          <span className="text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300 px-1.5 py-0.5 rounded-full">2 créditos</span>
+          <span className="text-[10px] font-medium bg-blue-100/60 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-1.5 py-0.5 rounded-full opacity-70">2 créditos</span>
         </h3>
         <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
           Gerada por IA, pronta para <strong>colar no corpo do e-mail</strong> ao enviar seu CV.

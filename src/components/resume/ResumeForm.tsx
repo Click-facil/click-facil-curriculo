@@ -15,7 +15,6 @@ import SkillsStep from "./SkillsStep";
 import ResumePreview from "./ResumePreview";
 import OnboardingTour from "./OnboardingTour";
 import AuthModal from "./AuthModal";
-import CheckoutModal from "./CheckoutModal";
 import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import { ATSAnalyzer } from "./ATSAnalyzer";
 import { LinkedInImporter } from "./LinkedInImporter";
@@ -25,6 +24,7 @@ import { toast } from "sonner";
 import { auth, onAuthChange, logout, checkPremium, grantPremium, addCredits } from "@/lib/firebase";
 import { useCredits } from "@/hooks/useCredits";
 import CreditsModal from "./CreditsModal";
+import { ADMIN_UIDS } from "@/lib/admin";
 import type { User as FirebaseUser } from "firebase/auth";
 import {
   trackStepCompleted,
@@ -53,10 +53,6 @@ const TEMPLATES: { id: TemplateStyle; name: string; description: string; free: b
 
 const PREMIUM_TEMPLATES: TemplateStyle[] = ["modern", "creative", "executive", "tech", "academic", "elegant"];
 
-const ADMIN_UIDS: string[] = [
-  "VC84FK6HWsfVBCVCt43OK6xw9x43",
-];
-
 const ResumeForm = () => {
   const [step, setStep] = useState(0);
   const [uid, setUid] = useState<string | null>(null);
@@ -71,7 +67,6 @@ const ResumeForm = () => {
   const [isPremium, setIsPremium] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-  const [showCheckout, setShowCheckout] = useState(false);
   const [showCreditsModal, setShowCreditsModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
 
@@ -166,12 +161,7 @@ const ResumeForm = () => {
   };
 
   const handleSelectTemplate = async (t: TemplateStyle) => {
-    if (hasAccess(t)) { setTemplate(t); return; }
-    if (!user) { setShowAuth(true); return; }
-    const ok = await unlockTemplate(t);
-    if (!ok) { setShowCreditsModal(true); return; }
     setTemplate(t);
-    toast.success(`Template ${t} desbloqueado! ⚡`);
   };
 
   const getProgress = useCallback(() => {
@@ -217,6 +207,14 @@ const ResumeForm = () => {
     if (!skipCheck) {
       if (!user) { setPendingAction("download-pdf"); setShowAuth(true); return; }
       if (!isAdmin) {
+        // Se for template premium e não está desbloqueado, cobra 1 crédito extra
+        const isPremiumTemplate = PREMIUM_TEMPLATES.includes(template);
+        if (isPremiumTemplate && !isTemplateUnlocked(template)) {
+          const unlocked = await unlockTemplate(template);
+          if (!unlocked) { setShowCreditsModal(true); return; }
+          toast.success(`Template ${template} desbloqueado! ⚡`);
+        }
+        // Cobra 2 créditos pelo download
         const ok = await spend("DOWNLOAD_PDF");
         if (!ok) { setShowCreditsModal(true); return; }
       }
@@ -374,14 +372,6 @@ const ResumeForm = () => {
           onSuccess={handleAuthSuccess}
         />
       )}
-      {showCheckout && user && (
-        <CheckoutModal
-          uid={user.uid}
-          email={user.email || ""}
-          onClose={() => { setShowCheckout(false); setPendingAction(null); }}
-          onSuccess={handleCheckoutSuccess}
-        />
-      )}
       {showCreditsModal && user && (
         <CreditsModal
           uid={user.uid}
@@ -423,9 +413,10 @@ const ResumeForm = () => {
                   {!isAdmin && (
                     <button
                       onClick={() => setShowCreditsModal(true)}
-                      className="text-xs bg-violet-500 text-white font-bold px-2 py-1 rounded-full hover:bg-violet-600 transition"
+                      className="flex items-center gap-1.5 text-xs bg-gradient-to-r from-blue-500 to-cyan-600 text-white font-semibold px-3 py-1.5 rounded-full hover:from-blue-600 hover:to-cyan-700 transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50"
                     >
-                      ⚡ {credits} créditos
+                      <span className="text-base">⚡</span>
+                      <span>{credits}</span>
                     </button>
                   )}
                   <span className="text-xs opacity-70 hidden sm:block">{user.displayName || user.email}</span>
@@ -585,7 +576,7 @@ const ResumeForm = () => {
                 <span className="text-sm font-semibold text-foreground">Escolha o template:</span>
               </div>
 
-              {/* Templates + carta de apresentação na mesma linha */}
+              {/* Templates */}
               <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
                 {TEMPLATES.map((t) => {
                   const locked = !hasAccess(t.id);
@@ -594,63 +585,55 @@ const ResumeForm = () => {
                     <button
                       key={t.id}
                       onClick={() => handleSelectTemplate(t.id)}
-                      className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium transition-all border relative ${
+                      className={`group w-full sm:w-auto px-4 py-3 rounded-xl text-sm font-medium transition-all border-2 relative overflow-hidden ${
                         active
-                          ? "bg-primary text-primary-foreground border-primary shadow-glow"
-                          : "bg-background text-foreground border-border hover:border-primary/50"
+                          ? "bg-gradient-to-br from-blue-500 to-cyan-600 text-white border-blue-600 shadow-lg shadow-blue-500/30"
+                          : "bg-white dark:bg-zinc-800 text-foreground border-border hover:border-blue-400 hover:shadow-md"
                       }`}
                     >
-                      {locked && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-40" />}
-                      {t.name}
-                      <span className="block text-[10px] opacity-70">{t.description}</span>
-                      {t.free ? (
-                        <span className="block text-[9px] text-green-600 font-bold">GRÁTIS</span>
-                      ) : (
-                        <span className="block text-[9px] text-amber-600 font-bold">
-                          {hasAccess(t.id) ? "DESBLOQUEADO ✓" : "1 crédito ⚡"}
-                        </span>
+                      {locked && !active && (
+                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                          <Lock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                        </div>
                       )}
+                      <div className="flex flex-col items-start">
+                        <span className="font-semibold">{t.name}</span>
+                        <span className={`block text-[10px] mt-0.5 ${
+                          active ? "text-white/80" : "text-muted-foreground"
+                        }`}>{t.description}</span>
+                        {t.free ? (
+                          <span className={`block text-[9px] font-semibold mt-1 ${
+                            active ? "text-white" : "text-green-600 dark:text-green-500"
+                          }`}>GRÁTIS</span>
+                        ) : (
+                          <span className={`block text-[9px] font-semibold mt-1 ${
+                            active ? "text-white" : hasAccess(t.id) ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-500"
+                          }`}>
+                            {hasAccess(t.id) ? "DESBLOQUEADO ✓" : "1 crédito ⚡"}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
-
-                {/* Card carta de apresentação — mesmo estilo dos templates */}
-                <div
-                  className={`w-full sm:w-auto px-4 py-2 rounded-lg text-sm border relative flex flex-col justify-between ${
-                    isAdmin
-                      ? "bg-background text-foreground border-border"
-                      : "bg-background text-foreground border-border opacity-70"
-                  }`}
-                >
-                  {!isAdmin && <Lock className="w-3 h-3 absolute top-1.5 right-1.5 opacity-40" />}
-                  <div>
-                    <span className="font-medium flex items-center gap-1">
-                      <Mail className="w-3 h-3" /> Carta de Apresentação
-                    </span>
-                    <span className="block text-[10px] opacity-70">Gerada por IA com seus dados</span>
-                    <span className="block text-[9px] text-amber-600 font-bold">
-                      {isAdmin ? "ILIMITADO ✓" : "2 créditos ⚡"}
-                    </span>
-                  </div>
-                </div>
               </div>
 
               {/* Banner créditos */}
               {!isAdmin && (
-                <div className="mt-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="mt-4 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 border border-blue-200 dark:border-blue-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="space-y-2">
-                    <p className="font-semibold text-amber-900 dark:text-amber-300 text-sm">
-                      ⚡ Compre créditos e use como quiser
+                    <p className="font-semibold text-blue-900 dark:text-blue-300 text-sm flex items-center gap-2">
+                      <span className="text-lg">⚡</span> Use seus créditos como quiser
                     </p>
-                    <ul className="text-xs text-amber-800 dark:text-amber-400 space-y-1">
+                    <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
                       <li className="flex items-center gap-2"><FileText className="w-3 h-3 flex-shrink-0" /> Templates premium — 1 crédito cada</li>
-                      <li className="flex items-center gap-2"><Mail className="w-3 h-3 flex-shrink-0" /> Carta de apresentação — 2 créditos</li>
+                      <li className="flex items-center gap-2"><Download className="w-3 h-3 flex-shrink-0" /> Download PDF — 2 créditos</li>
                       <li className="flex items-center gap-2"><Check className="w-3 h-3 flex-shrink-0" /> Pacote Popular: 30 créditos por R$&nbsp;9,90</li>
                     </ul>
                   </div>
                   <Button
                     size="sm"
-                    className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0 w-full sm:w-auto"
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white flex-shrink-0 w-full sm:w-auto shadow-lg"
                     onClick={() => { trackUnlockIntent("banner_templates"); if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
                   >
                     Comprar créditos
@@ -749,7 +732,7 @@ const ResumeForm = () => {
                 <li>✅ Templates Clássico e Minimalista grátis</li>
                 <li>✅ Sem cadastro obrigatório</li>
                 <li>✅ Download em PDF</li>
-                <li>⭐ Templates premium por R$9,90 únicos</li>
+                <li>⭐ Sistema de créditos flexível</li>
                 <li>⭐ Currículo salvo na nuvem com conta</li>
               </ul>
             </div>

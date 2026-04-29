@@ -202,12 +202,12 @@ export function ATSAnalyzer({ data, spend, onShowCredits, uid }: ATSAnalyzerProp
           <TrendingUp className="w-4 h-4 text-muted-foreground" />
           <h3 className="font-semibold text-foreground text-sm">Análise ATS</h3>
           {!usedFreeAnalysis && (
-            <span className="text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium bg-green-100/60 text-green-700 dark:bg-green-900/40 dark:text-green-400 px-1.5 py-0.5 rounded-full opacity-70">
               1ª GRÁTIS
             </span>
           )}
           {usedFreeAnalysis && (
-            <span className="text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-medium bg-blue-100/60 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-1.5 py-0.5 rounded-full opacity-70">
               1 crédito
             </span>
           )}

@@ -1,5 +1,6 @@
 import { doc, getDoc, runTransaction } from "firebase/firestore";
 import { db } from "./firebase";
+import { isAdmin } from "./admin";
 
 export const CREDIT_COSTS = {
   LINKEDIN_IMPORT: 3,
@@ -26,6 +27,9 @@ export const CREDIT_LABELS: Record<CreditAction, string> = {
  * Retorna true se sucesso, false se saldo insuficiente.
  */
 export async function spend(uid: string, action: CreditAction): Promise<boolean> {
+  // Admin tem acesso ilimitado
+  if (isAdmin(uid)) return true;
+  
   const cost = CREDIT_COSTS[action];
   const ref = doc(db, "users", uid);
 
@@ -59,6 +63,9 @@ export async function spend(uid: string, action: CreditAction): Promise<boolean>
  * Premium/admin = 9999 (ilimitado).
  */
 export async function getCredits(uid: string): Promise<number> {
+  // Admin tem créditos ilimitados
+  if (isAdmin(uid)) return 9999;
+  
   try {
     const snap = await getDoc(doc(db, "users", uid));
     const data = snap.data();
@@ -74,6 +81,9 @@ export async function getCredits(uid: string): Promise<number> {
  * Salva o template na lista de templates desbloqueados do usuário.
  */
 export async function unlockTemplate(uid: string, templateId: string): Promise<boolean> {
+  // Admin tem tudo desbloqueado
+  if (isAdmin(uid)) return true;
+  
   const ref = doc(db, "users", uid);
   try {
     await runTransaction(db, async (tx) => {
@@ -107,6 +117,9 @@ export async function unlockTemplate(uid: string, templateId: string): Promise<b
  * Verifica se um template está desbloqueado para o usuário.
  */
 export async function isTemplateUnlocked(uid: string, templateId: string): Promise<boolean> {
+  // Admin tem tudo desbloqueado
+  if (isAdmin(uid)) return true;
+  
   try {
     const snap = await getDoc(doc(db, "users", uid));
     const data = snap.data();

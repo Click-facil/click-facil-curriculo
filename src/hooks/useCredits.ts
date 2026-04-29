@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { spend as spendFn, unlockTemplate as unlockFn, CREDIT_COSTS, CreditAction } from "@/lib/credits";
+import { isAdmin } from "@/lib/admin";
 
 interface UseCreditsReturn {
   credits: number;
@@ -25,6 +26,15 @@ export function useCredits(uid: string | null): UseCreditsReturn {
       setCredits(0);
       setUnlockedTemplates([]);
       setIsUnlimited(false);
+      setLoading(false);
+      return;
+    }
+
+    // Verifica se é admin
+    if (isAdmin(uid)) {
+      setIsUnlimited(true);
+      setCredits(9999);
+      setUnlockedTemplates([]);
       setLoading(false);
       return;
     }
