@@ -411,7 +411,9 @@ const ResumeForm = () => {
                       <span>{credits}</span>
                     </button>
                   )}
-                  <span className="text-xs opacity-70 hidden sm:block">{user.displayName || user.email}</span>
+                  <Link to="/conta" className="opacity-60 hover:opacity-100 transition" title="Minha conta">
+                    <User className="w-4 h-4" />
+                  </Link>
                   <button onClick={() => logout()} title="Sair" className="opacity-60 hover:opacity-100 transition">
                     <LogOut className="w-4 h-4" />
                   </button>

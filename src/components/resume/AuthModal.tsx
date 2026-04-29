@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Mail, Lock, Eye, EyeOff, Chrome } from "lucide-react";
+import { X, Mail, Lock, Eye, EyeOff, Chrome, User } from "lucide-react";
 import {
   loginWithGoogle,
   loginWithEmail,
   registerWithEmail,
   grantWelcomeCredits,
 } from "@/lib/firebase";
+import { updateProfile } from "firebase/auth";
 import { toast } from "sonner";
 
 interface Props {
@@ -22,6 +23,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +53,10 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
       toast.error("Preencha e-mail e senha.");
       return;
     }
+    if (mode === "register" && !name.trim()) {
+      toast.error("Preencha seu nome.");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "login") {
@@ -58,6 +64,8 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
         toast.success("Login realizado!");
       } else {
         const credential = await registerWithEmail(email, password);
+        // Atualiza o nome do usuário
+        await updateProfile(credential.user, { displayName: name.trim() });
         await grantWelcomeCredits(credential.user.uid);
         toast.success("Conta criada! Você ganhou 8 créditos grátis ⚡");
       }
@@ -137,6 +145,18 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
 
         {/* Email / senha */}
         <div className="space-y-3">
+          {mode === "register" && (
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Seu nome"
+                className="pl-9"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          )}
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
