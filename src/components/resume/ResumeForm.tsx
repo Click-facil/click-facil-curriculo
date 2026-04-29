@@ -41,8 +41,8 @@ const TEMPLATE_KEY = "clickfacil_template";
 export type TemplateStyle = "modern" | "classic" | "minimal" | "creative" | "executive" | "tech" | "academic" | "elegant";
 
 const TEMPLATES: { id: TemplateStyle; name: string; description: string; free: boolean }[] = [
-  { id: "classic",   name: "Clássico",    description: "Coluna única, serifado e formal", free: true  },
-  { id: "minimal",   name: "Minimalista", description: "Flat design, clean e direto",     free: true  },
+  { id: "classic",   name: "Clássico",    description: "Coluna única, serifado e formal", free: false  },
+  { id: "minimal",   name: "Minimalista", description: "Flat design, clean e direto",     free: false  },
   { id: "modern",    name: "Moderno",     description: "Sidebar lateral com ícones",      free: false },
   { id: "creative",  name: "Criativo",    description: "Colorido e ousado",               free: false },
   { id: "executive", name: "Executivo",   description: "Elegante e sofisticado",          free: false },
@@ -626,7 +626,7 @@ const ResumeForm = () => {
                       <span className="text-lg">⚡</span> Use seus créditos como quiser
                     </p>
                     <ul className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
-                      <li className="flex items-center gap-2"><FileText className="w-3 h-3 flex-shrink-0" /> Templates premium — 1 crédito cada</li>
+                      <li className="flex items-center gap-2"><FileText className="w-3 h-3 flex-shrink-0" /> Todos os templates — 1 crédito cada</li>
                       <li className="flex items-center gap-2"><Download className="w-3 h-3 flex-shrink-0" /> Download PDF — 2 créditos</li>
                       <li className="flex items-center gap-2"><Check className="w-3 h-3 flex-shrink-0" /> Pacote Popular: 30 créditos por R$&nbsp;9,90</li>
                     </ul>
@@ -729,7 +729,7 @@ const ResumeForm = () => {
                 <Info className="w-4 h-4" /> Como funciona
               </h3>
               <ul className="space-y-1 text-sm opacity-75">
-                <li>✅ Templates Clássico e Minimalista grátis</li>
+                <li>✅ 8 créditos grátis ao criar conta</li>
                 <li>✅ Sem cadastro obrigatório</li>
                 <li>✅ Download em PDF</li>
                 <li>⭐ Sistema de créditos flexível</li>

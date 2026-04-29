@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, Check, RefreshCw } from "lucide-react";
+import { Sparkles, Loader2, Check, RefreshCw, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -27,6 +27,15 @@ export const ImproveButton = ({
   const [loading, setLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [usedFreeImprovement, setUsedFreeImprovement] = useState(false);
+
+  // Verifica se já usou a melhoria grátis deste campo
+  useEffect(() => {
+    if (!uid) return;
+    const key = `free_improve_${tipo}_${uid}`;
+    const used = localStorage.getItem(key) === "true";
+    setUsedFreeImprovement(used);
+  }, [uid, tipo]);
 
   useEffect(() => {
     if (cooldown > 0) {
@@ -46,13 +55,15 @@ export const ImproveButton = ({
       return;
     }
 
-    if (!isUnlimited && credits < 1) {
+    // Verifica se é a primeira melhoria (grátis)
+    const isFree = !usedFreeImprovement;
+
+    if (!isFree && !isUnlimited && credits < 1) {
       onShowCredits();
       return;
     }
 
     setLoading(true);
-    // NÃO limpa a sugestão aqui - mantém o bloco visível
     
     try {
       // Em desenvolvimento, chama GROQ direto
@@ -130,7 +141,14 @@ Retorne APENAS os tópicos melhorados, um por linha, sem numeração, sem aspas,
         setSuggestion(data.improved);
       }
       
-      setCooldown(5);
+      setCooldown(10);
+      
+      // Marca que usou a melhoria grátis
+      if (isFree && uid) {
+        const key = `free_improve_${tipo}_${uid}`;
+        localStorage.setItem(key, "true");
+        setUsedFreeImprovement(true);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Erro ao melhorar texto. Tente novamente.");
@@ -150,26 +168,40 @@ Retorne APENAS os tópicos melhorados, um por linha, sem numeração, sem aspas,
   return (
     <div className="mt-2 space-y-2">
       {!suggestion && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleImprove}
-          disabled={loading || !value.trim()}
-          className="w-full sm:w-auto"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-              Melhorando...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-3.5 h-3.5 mr-2" />
-              Melhorar com IA {!isUnlimited && <span className="ml-1 text-[10px] opacity-60">(1 crédito)</span>}
-            </>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleImprove}
+            disabled={loading || !value.trim()}
+            className="flex-1 sm:flex-initial"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                Melhorando...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 mr-2" />
+                Melhorar com IA
+              </>
+            )}
+          </Button>
+          {!isUnlimited && (
+            <span className="text-[10px] text-muted-foreground opacity-60 flex items-center gap-1">
+              {!usedFreeImprovement ? (
+                <span className="text-green-600 dark:text-green-500 font-medium">1 grátis</span>
+              ) : (
+                <>
+                  <Zap className="w-3 h-3" />
+                  {credits} créditos
+                </>
+              )}
+            </span>
           )}
-        </Button>
+        </div>
       )}
 
       {suggestion && (

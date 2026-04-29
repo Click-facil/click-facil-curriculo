@@ -96,8 +96,8 @@ export async function grantWelcomeCredits(uid: string): Promise<void> {
   await setDoc(
     doc(db, "users", uid),
     {
-      credits: 10,
-      creditsTotal: 10,
+      credits: 8,
+      creditsTotal: 8,
       freeCreditsUsed: true,
       createdAt: serverTimestamp(),
     },
