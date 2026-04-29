@@ -185,35 +185,6 @@ export function JobRecommendations({ userObjective, isPremium, onUpgrade }: JobR
         </div>
 
       </div>
-
-      {/* CTA Premium */}
-      {!isPremium && (
-        <div className="mt-6 pt-6 border-t border-border">
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <p className="text-foreground font-semibold text-sm">
-                    Destaque-se para essas empresas
-                  </p>
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  Templates premium + Carta por IA = Aprovação garantida
-                </p>
-              </div>
-              <Button 
-                onClick={onUpgrade}
-                size="sm"
-                className="bg-amber-500 hover:bg-amber-600 text-white whitespace-nowrap"
-              >
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Premium R$ 9,90
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

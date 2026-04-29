@@ -6,22 +6,22 @@ const TOUR_STEPS = [
   {
     icon: Sparkles,
     title: "Bem-vindo ao Click Fácil! 👋",
-    description: "Vamos te ajudar a criar um currículo profissional em poucos minutos. É simples e rápido!",
+    description: "Crie currículos profissionais com IA, análise ATS, carta de apresentação e vagas personalizadas. Tudo em minutos!",
   },
   {
     icon: FileText,
     title: "Preencha passo a passo",
-    description: "O formulário é dividido em etapas simples. Basta preencher cada campo e clicar em 'Próximo'. A barra acima mostra seu progresso.",
+    description: "Formulário dividido em etapas simples. Use a IA para melhorar seus textos e destaque suas experiências profissionais.",
   },
   {
     icon: Upload,
-    title: "Adicione sua foto",
-    description: "Uma foto profissional aumenta suas chances! Clique no círculo para enviar. Use fundo claro e roupa adequada.",
+    title: "Recursos inteligentes",
+    description: "Importe do LinkedIn, melhore textos com IA, gere carta de apresentação e veja sua compatibilidade ATS automaticamente.",
   },
   {
     icon: Download,
-    title: "Baixe seu currículo",
-    description: "Ao finalizar, você poderá visualizar e baixar seu currículo em PDF, pronto para enviar às empresas!",
+    title: "Escolha e baixe",
+    description: "8 templates profissionais disponíveis. Baixe em PDF quantas vezes quiser. Sistema de créditos flexível e justo!",
   },
 ];
 

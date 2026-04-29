@@ -586,9 +586,9 @@ const ResumeForm = () => {
                           : "bg-white dark:bg-zinc-800 text-foreground border-border hover:border-blue-400 hover:shadow-md"
                       }`}
                     >
-                      <div className="flex flex-col items-start">
+                      <div className="flex flex-col items-center sm:items-start">
                         <span className="font-semibold">{t.name}</span>
-                        <span className={`block text-[10px] mt-0.5 ${
+                        <span className={`block text-[10px] mt-0.5 text-center sm:text-left ${
                           active ? "text-white/80" : "text-muted-foreground"
                         }`}>{t.description}</span>
                       </div>
@@ -695,14 +695,15 @@ const ResumeForm = () => {
             </div>
             <div>
               <h3 className="text-base font-semibold font-display mb-3 flex items-center gap-2">
-                <Info className="w-4 h-4" /> Como funciona
+                <Info className="w-4 h-4" /> Funcionalidades
               </h3>
               <ul className="space-y-1 text-sm opacity-75">
-                <li>✅ 8 créditos grátis ao criar conta</li>
-                <li>✅ Sem cadastro obrigatório</li>
+                <li>✅ Análise ATS (compatibilidade)</li>
+                <li>✅ Melhoria de texto com IA</li>
+                <li>✅ Geração de carta de apresentação</li>
+                <li>✅ Vagas em alta personalizadas</li>
                 <li>✅ Download em PDF</li>
-                <li>⭐ Sistema de créditos flexível</li>
-                <li>⭐ Currículo salvo na nuvem com conta</li>
+                <li>✅ Sistema de créditos flexível</li>
               </ul>
             </div>
             <div>
