@@ -16,7 +16,7 @@ interface Props {
   /** Chamado após login/cadastro bem-sucedido */
   onSuccess: () => void;
   /** Se true, mostra contexto de "para salvar seu currículo" */
-  context?: "save" | "premium";
+  context?: "save" | "premium" | "download";
 }
 
 const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
@@ -36,7 +36,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
       const isNew = (result as any)._tokenResponse?.isNewUser === true;
       if (isNew) {
         await grantWelcomeCredits(uid);
-        toast.success("Conta criada! Você ganhou 8 créditos grátis ⚡");
+        toast.success("Conta criada! Você ganhou 7 créditos grátis ⚡");
       } else {
         toast.success("Login realizado com sucesso!");
       }
@@ -67,7 +67,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
         // Atualiza o nome do usuário
         await updateProfile(credential.user, { displayName: name.trim() });
         await grantWelcomeCredits(credential.user.uid);
-        toast.success("Conta criada! Você ganhou 8 créditos grátis ⚡");
+        toast.success("Conta criada! Você ganhou 7 créditos grátis ⚡");
       }
       onSuccess();
     } catch (e: any) {
@@ -104,10 +104,19 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center mx-auto mb-3">
             <span className="text-2xl">⚡</span>
           </div>
-          {context === "premium" ? (
+          {context === "download" ? (
             <>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                Ganhe 8 créditos grátis
+                Seu currículo está pronto! 🎉
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Crie sua conta gratuita para salvar na nuvem e liberar o download.
+              </p>
+            </>
+          ) : context === "premium" ? (
+            <>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Ganhe 7 créditos grátis
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 Crie sua conta e use créditos para importar LinkedIn, gerar
@@ -120,7 +129,7 @@ const AuthModal = ({ onClose, onSuccess, context = "premium" }: Props) => {
                 Salvar currículo
               </h2>
               <p className="text-sm text-gray-500 mt-1">
-                Crie uma conta grátis e ganhe 8 créditos de boas-vindas ⚡
+                Crie uma conta grátis e ganhe 7 créditos de boas-vindas ⚡
               </p>
             </>
           )}

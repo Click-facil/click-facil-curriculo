@@ -204,9 +204,12 @@ const ResumeForm = () => {
 
   const handleDownload = async (skipCheck = false) => {
     if (!skipCheck) {
-      if (!user) { setPendingAction("download-pdf"); setShowAuth(true); return; }
+      if (!user) {
+        setPendingAction("download-pdf");
+        setShowAuth(true);
+        return;
+      }
       if (!isAdmin) {
-        // Cobra 2 créditos pelo download
         const ok = await spend("DOWNLOAD_PDF");
         if (!ok) { setShowCreditsModal(true); return; }
       }
@@ -359,7 +362,7 @@ const ResumeForm = () => {
 
       {showAuth && (
         <AuthModal
-          context="premium"
+          context={pendingAction === "download-pdf" ? "download" : "premium"}
           onClose={() => { setShowAuth(false); setPendingAction(null); }}
           onSuccess={handleAuthSuccess}
         />
