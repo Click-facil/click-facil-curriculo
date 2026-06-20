@@ -12,8 +12,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ message: 'Parâmetro "role" é obrigatório' });
   }
 
-  const appId = process.env.ADZUNA_APP_ID || 'dd514507';
-  const appKey = process.env.ADZUNA_APP_KEY || '46aed95d15d587a6d91c65ea';
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+
+  if (!appId || !appKey) {
+    console.error('ADZUNA_APP_ID ou ADZUNA_APP_KEY não configurados');
+    return res.status(500).json({ message: 'Serviço de vagas temporariamente indisponível.' });
+  }
 
   try {
     const url = `https://api.adzuna.com/v1/api/jobs/br/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=3&what=${encodeURIComponent(role)}&sort_by=date`;
