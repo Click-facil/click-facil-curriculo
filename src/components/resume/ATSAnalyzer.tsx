@@ -3,8 +3,6 @@ import { Loader2, CheckCircle2, AlertCircle, XCircle, TrendingUp } from "lucide-
 import { ResumeData } from "@/types/resume";
 import { trackATSAnalyzed } from "@/lib/analytics";
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-
 interface ATSItem {
   status: "ok" | "warning" | "error";
   mensagem: string;
@@ -124,25 +122,14 @@ export function ATSAnalyzer({ data }: ATSAnalyzerProps) {
   }, [result]);
 
   async function analyze() {
-    const apiKey = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
-    if (!apiKey) { setError("Chave da API não configurada."); return; }
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(GROQ_API_URL, {
+      const response = await fetch("/api/analyze-ats", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: [{ role: "user", content: buildPrompt(data) }],
-          temperature: 0.3,
-          max_tokens: 600,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: buildPrompt(data) }),
       });
 
       if (!response.ok) throw new Error("Erro na API");
@@ -150,7 +137,6 @@ export function ATSAnalyzer({ data }: ATSAnalyzerProps) {
       const json = await response.json();
       const texto: string = json?.choices?.[0]?.message?.content || "";
 
-      // Extrai o JSON mesmo se vier com texto ao redor
       const match = texto.match(/\{[\s\S]*\}/);
       if (!match) throw new Error("Resposta inválida da IA");
 

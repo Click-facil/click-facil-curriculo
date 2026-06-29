@@ -19,6 +19,7 @@ import { CoverLetterGenerator } from "./CoverLetterGenerator";
 import { ATSAnalyzer } from "./ATSAnalyzer";
 import { LinkedInImporter } from "./LinkedInImporter";
 import { JobRecommendations } from "./JobRecommendations";
+import { JobMatcher } from "./JobMatcher";
 import { toast } from "sonner";
 // import { exportToDocx } from "@/lib/docx-export";
 import { auth, onAuthChange, logout, checkPremium, grantPremium, addCredits } from "@/lib/firebase";
@@ -626,7 +627,7 @@ const ResumeForm = () => {
               )}
             </div>
 
-            {/* Mobile: prévia → ATS → vagas → carta → limpar */}
+            {/* Mobile: prévia → ATS → match → vagas → carta → limpar */}
             <div className="block xl:hidden space-y-6">
               <div className="w-full overflow-hidden" style={{ height: "505px" }}>
                 <div
@@ -641,15 +642,22 @@ const ResumeForm = () => {
                 </div>
               </div>
               <ATSAnalyzer data={data} />
-              <CoverLetterGenerator
+              <JobMatcher
                 data={data}
-                spend={spend}
+                uid={uid}
+                isAdmin={isAdmin}
+                onShowAuth={() => setShowAuth(true)}
                 onShowCredits={() => setShowCreditsModal(true)}
               />
               <JobRecommendations
                 userObjective={data.personalInfo.objective}
                 isPremium={isPremium || isAdmin}
                 onUpgrade={() => { if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
+              />
+              <CoverLetterGenerator
+                data={data}
+                spend={spend}
+                onShowCredits={() => setShowCreditsModal(true)}
               />
               <div className="flex justify-end pb-4">
                 <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
@@ -658,19 +666,26 @@ const ResumeForm = () => {
               </div>
             </div>
 
-            {/* Desktop: coluna lateral esquerda (ATS + vagas + carta + limpar) | coluna direita (prévia) */}
+            {/* Desktop: coluna lateral esquerda (ATS + match + vagas + carta + limpar) | coluna direita (prévia) */}
             <div className="hidden xl:flex flex-row gap-6 items-start pb-8">
               <div className="w-72 flex-shrink-0 space-y-4">
                 <ATSAnalyzer data={data} />
-                <CoverLetterGenerator
+                <JobMatcher
                   data={data}
-                  spend={spend}
+                  uid={uid}
+                  isAdmin={isAdmin}
+                  onShowAuth={() => setShowAuth(true)}
                   onShowCredits={() => setShowCreditsModal(true)}
                 />
                 <JobRecommendations
                   userObjective={data.personalInfo.objective}
                   isPremium={isPremium || isAdmin}
                   onUpgrade={() => { if (!user) { setShowAuth(true); } else { setShowCreditsModal(true); } }}
+                />
+                <CoverLetterGenerator
+                  data={data}
+                  spend={spend}
+                  onShowCredits={() => setShowCreditsModal(true)}
                 />
                 <div className="flex justify-end">
                   <Button variant="ghost" size="sm" onClick={handleClearData} className="text-destructive hover:text-destructive">
